@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        #userCount{
+            position: absolute; left: 20px; width: 160px; height: 30px;
+        }
+        #Erlang{
+            position: absolute; left: 200px; width: 160px; height: 30px;
+        }
+        #dataThroughPut{
+            position: absolute; left: 380px; width: 160px; height: 30px;
+        }
+        #trendPlot{
+            position: absolute; top: 40px; left: 10px; height: 300px; width: 600px;  border-top: 1px solid #db9f27;
+        }
+        .button{
+            color: white;
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:0px;
+            background: none;
+            outline: none;
+            font-family:Microsoft YaHei;
+        }
+        .custom-button-wx{
+            position: absolute; width:80px; font-size: 20px; color: #ffffff;
+        }
+        .custom-div-wx{
+            width: 100px;
+            border-left: 0px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 30px solid #db9f27;
+            opacity: 0.5;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body style="background-color: #252c34">
+<div>
+    <div id="userCount">
+        <input type="button"  class="button custom-button-wx"   background-image=""  value="用户数" align="middle" />
+        <div  class="custom-div-wx" style="visibility: visible;"></div>
+    </div>
+    <div id="Erlang" >
+        <input type="button"  class="button custom-button-wx"   background-image=""  value="话务量" align="middle" />
+        <div  class="custom-div-wx"></div>
+    </div>
+    <div id="dataThroughPut">
+        <input type="button"  class="button custom-button-wx"   background-image=""  value="流量" align="middle" />
+        <div  class="custom-div-wx"></div>
+    </div>
+    <div id="trendPlot" ></div>
+</div>
+
+<script src="../scripts/jquery-1.9.1.min.js"></script>
+<script>
+    var baseUrl = '10.221.247.7';
+    var locationUrl = window.location.href;
+    locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    function callServer(disName,str){
+        showAllIndexInfo(disName,str);
+    }
+    function showAllIndexInfo(disName, str){
+        $('#trendPlot').empty();
+        var src = "yhsBigPopup.html?name=";
+        str === '流量' && (src = "llBigPopup.html?name=");
+        str === '话务量' && (src = "hwlBigPopup.html?name=");
+        var myiframe=document.createElement("iframe");
+        myiframe.name="showframe" ;
+        myiframe.width="100%";
+        myiframe.height="100%";
+        myiframe.marginwidth="0";
+        myiframe.marginheight="0";
+        myiframe.hspace="0";
+        myiframe.vspace="0";
+        myiframe.frameborder="0";
+        myiframe.scrolling="no";
+        myiframe.style.border="none";
+        myiframe.src= src + encodeURIComponent(disName);
+        document.getElementById('trendPlot').appendChild(myiframe);
+    }
+    var indexName = '用户数';
+    var parasObj = getUrlParam(locationUrl,'');
+    var nameVal = decodeURIComponent(parasObj.name);
+    //var nameVal = '迪士尼';
+    //document.getElementById("titleInfo").innerHTML = " 【" + nameVal + "】" + '详情';
+    callServer(nameVal,indexName);
+
+    function getUrlParam(sUrl, sKey) {
+        sUrl = sUrl.split('?')[1];//截取地址之后的所有参数
+        //sUrl = sUrl.replace(/[&#]/g,'');//删除所有特殊字符
+        //console.log(sUrl)
+        if(sKey !== ''){
+            //console.log('不为空')
+            //构造正则，并截取最新的sUrl
+            var para = '(' + sKey + '=' + ')';
+            var myReg1 = new RegExp(para,'g');
+            //var myReg2 = /[A-Za-z0-9]+/g;//可以修改传中文或者数字参数
+            var myReg2 = /^([\u4E00-\u9FA5]+，?)+$/g;
+            var myReg = new RegExp(myReg1.source + myReg2.source,'g');
+            //console.log(myReg)
+            var temArray = sUrl.match(myReg);//得到的是含有参数分隔符的数组,如果只需要返回参数，则还需进行下面的转换
+            //console.log(temArray)
+            if(temArray){
+                temArray = temArray.toString().replace(myReg1,'');//删除参数分隔符sKey=,得到的是字符串
+                var result = temArray.split(',');//字符串转换为数组
+                return result;
+            }
+            else{
+                //console.log(sKey)
+                return '';//传入的参数名称sKey有错或者参数名值为空
+            }
+        }
+        if(sKey === ''){
+            //console.log('为空')
+            sUrl = sUrl.split(/[&#]/g);//以特殊字符为分隔符生成数组
+            var resultObj = {};//最后需要返回的对象
+            for(var i= 0, len = sUrl.length; i<len; ++i){
+                var temValue = sUrl[i];
+                var temArrayV = temValue.split('=');
+                resultObj[temArrayV[0]] = temArrayV[1];
+            }
+            return resultObj;
+        }
+    }
+    $('.custom-button-wx').on('click',function(){
+        $('.custom-div-wx').css('visibility', 'hidden');
+        //$('.custom-button-wx').css('color','#ffffff');
+        //$(this).css('color','#6495ED');
+        $(this).next().css('visibility', 'visible');
+        indexName = $(this).val();
+        callServer(nameVal,indexName);
+        //console.log(indexName)
+    });
+</script>
+</body>
+</html>

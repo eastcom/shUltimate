@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>坐标定位</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="renderer" content="webkit">
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <style>
+        body{ margin:0; padding:0; font-family: "Microsoft YaHei";}
+        #map{ position: absolute; top:0; bottom:0; right: 0px; left:0; z-index: -1;}
+        #infoLocation{position: absolute; left: 10px;  bottom: 10px;}
+
+    </style>
+    <script>
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    </script>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    <script>
+        eval(function(p,a,c,k,e,r){e=function(c){return(c<a?'':e(parseInt(c/a)))+((c=c%a)>35?String.fromCharCode(c+29):c.toString(36))};if(!''.replace(/^/,String)){while(c--)r[e(c)]=k[c]||e(c);k=[function(e){return r[e]}];e=function(){return'\\w+'};c=1};while(c--)if(k[c])p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c]);return p}('L.1F.1G={1q:[3i.1X,3q.3E,4g,4w.5c,5f.12,0],R:[3s,3y,45,30,15,0],1Q:[[1.5d-8,0.31,-1.3b,3c.3d,-3e.3f,3g.3h,-23.3j,2.3n,-0.3o,3p.2],[-7.3r-9,0.3t,-0.3u,3v.3w,-1.3x,-59.3z,47.3A,-16.3B,2.3C,3D.1X],[-3.3F-8,0.3G,0.3J,59.3N,7.3P,-25.3S,13.41,-3.43,0.44,49.37],[-1.4h-8,0.4i,0.4j,40.4k,0.4m,-4.4x,0.4y,0.4z,-0.4A,4B.4D],[3.4E-9,0.4F,0.4G,23.4H,-0.4I,-0.4J,-0.4K,0.4L,-0.4M,4N.4],[2.4O-9,0.4P,-3.4Q-8,7.4Z,-0.53,-0.54,-0.55,0.57,-0.58,5a.5]],1u:[[-0.5e,N.5h,5j,-5k,5l,-5p,5v,-5w,5x,5y.5],[0.5z,N.5A,5B.5C,-5D.5E,5F.5G,-5I.5L,5O.5P,-5Q.5R,5S.5T,5U.5],[0.2b,N.2c,2d.2e,-2f.2g,2h.2i,-2j.2k,2l.2m,-2n.2o,2p.2q,52.5],[0.2r,N.2s,2t.2u,2v.2w,2x.2y,-2z.2A,2B.2C,-2D.2E,2F.2G,37.5],[-0.2H,N.2I,2J.2K,2L.2M,2N.2O,2P.2Q,2R.2S,-2T.2U,2V.2W,22.5],[-0.2X,N.2Y,0.2Z,5V.32,0.33,34.36,1.38,8.39,0.3a,7.45]],1E:q(f,b,c){P(;f>c;){f-=c-b}P(;f<b;){f+=c-b}t f},1B:q(f,b,c){b!=(f=p.3k(f,b));c!=(f=p.3l(f,c));t f},1s:q(h,b){U(h&&b){o c=b[0]+b[1]*p.I(h.H);o d=p.I(h.D)/b[9];d=b[2]+b[3]*d+b[4]*d*d+b[5]*d*d*d+b[6]*d*d*d*d+b[7]*d*d*d*d*d+b[8]*d*d*d*d*d*d;c=c*(0>h.H?-1:1);d=d*(0>h.D?-1:1);t L.14(c,d)}},1L:q(h){o b,c;h.H=w.1E(h.H,-A,A);h.D=w.1B(h.D,-1z,1z);b=L.14(h.D,h.H);P(o d=0;d<w.R.1j;d++){U(b.D>=w.R[d]){c=w.1u[d];1i}}U(!c){P(d=w.R.1j-1;0<=d;d--){U(b.D<=-w.R[d]){c=w.1u[d];1i}}}h=w.1s(h,c);t L.1H(h.D.Y(2),h.H.Y(2))},1W:q(h){o b,c;b=W L.14(p.I(h.y),p.I(h.x));P(o d=0;d<w.1q.1j;d++){U(b.D>=w.1q[d]){c=w.1Q[d];1i}}1h=w.1s(b,c);t L.14(1h.H.Y(6),1h.D.Y(6))},3H:q(c){o d=w.1L(c);t d},3I:q(b){t w.1W(b)},1S:(q(){o f=3K.37;o h=-3L.3M;o g=3O.17;o j=L.1S([-f,h],[f,g]);o i=3Q;j=W L.3R([-i,-i],[i,i]);t j})()};L.1T.3T=L.1U({},L.1T.3U,{3V:"3W:3X",3Y:L.1F.1G,3Z:(q(){o c=-18-8;o d=p.1V(2,c);t W L.42(d,0.5,-d,0.5)}())});L.G.Q=L.G.1U({48:{1k:\'© 4a 4b - 4c(4d)4e;- 4f © <a 1l="1m" 1n="B://1r.4l.J/">4n</a> & <a 1l="1m" 1n="B://1r.4o.J.4p/">4q</a> & <a 1l="1m" 1n="B://1r.4r.J/">4s</a>\'},4t:{4u:3,4v:19},1A:q(m,h){o j=L.G.Q.1C;m=m||"1D.E";o k=m.4C(".");o n=k[0],l=k[1];o i=j[n][l];h=h||{};h.1w=j.1w;h.1k=L.G.Q.1k;L.G.1M.1A.1N(w,i,h)},1O:q(j){o i=p.1V(2,j.z-1),g=j.x-i,h=i-j.y-1,f=L.1H(g,h);f.z=j.z;t L.G.1M.1O.1N(w,f)}});L.G.Q.1C={1D:{E:"B://1R{s}.1f.1g.J/X/?2a=X&x={x}&y={y}&z={z}&1Y=4R"},4S:{E:"B://4T{s}.1f.1g.J/4U/u=x={x};y={y};z={z};v=4V;4W=4X&4Y=46",1y:"B://1R{s}.1f.1g.J/X/?2a=X&x={x}&y={y}&z={z}&1Y=50"},51:{E:"B://10.8.Z.11/56/V/1a/{z}/{x}/{y}.F"},5b:{E:\'B://10.8.Z.11/1o/V/1a/1p/1I/{z}/{x}/{y}.F\',1y:\'B://10.8.Z.11/1o/V/1a/1p/1J/{z}/{x}/{y}.F\'},5g:{E:\'B://10.8.Z.11/1o/V/1a/1p/1K/{z}/{x}/{y}.F\'},5i:{E:\'B://\'+1b+\':1c/1d/5m/5n/{z}/{x}/{y}.F\'},5o:{E:\'B://\'+1b+\':1c/1d/1t/1K/{z}/{x}/{y}.F\'},5q:{E:\'B://\'+1b+\':1c/1d/1t/1I/{z}/{x}/{y}.F\',1y:\'B://\'+1b+\':1c/1d/1t/1J/{z}/{x}/{y}.F\'},1w:"5r"};L.5s.5t=q(c,d){t W L.G.Q(c,d)};q 5u(k,j){o d=3.C*O/A;o n=3.C;o m=S;o f=0.T;o g=1v(k-1e,j-35);o i=1x(k-1e,j-35);o b=j/A*n;o l=p.r(b);l=1-f*l*l;o h=p.K(l);g=(g*A)/((m*(1-f))/(l*h)*n);i=(i*A)/(m/h*p.M(b)*n);o c=j+g;o e=k+i;t[e,c]}q 1v(e,g){o f=3.C*O/A;o h=3.C;o c=S;o b=0.T;o d=-5H+2*e+3*g+0.2*g*g+0.1*e*g+0.2*p.K(p.I(e));d+=(20*p.r(6*e*h)+20*p.r(2*e*h))*2/3;d+=(20*p.r(g*h)+40*p.r(g/3*h))*2/3;d+=(5J*p.r(g/12*h)+5K*p.r(g*h/30))*2/3;t d}q 1x(e,g){o f=3.C*O/A;o h=3.C;o c=S;o b=0.T;o d=1Z+e+2*g+0.1*e*e+0.1*e*g+0.1*p.K(p.I(e));d+=(20*p.r(6*e*h)+20*p.r(2*e*h))*2/3;d+=(20*p.r(e*h)+40*p.r(e/3*h))*2/3;d+=(5M*p.r(e/12*h)+1Z*p.r(e/30*h))*2/3;t d}q 5N(i,h){o e=3.C*O/A;o k=3.C;o j=S;o f=0.T;o g=p.K(i*i+h*h)+0.21*p.r(h*e);o b=p.24(h,i)+0.26*p.M(i*e);o d=g*p.M(b)+0.27;o c=g*p.r(b)+0.28;t[d,c]}q 29(f,b){o i=3.C*O/A;o h=f-0.27;o g=b-0.28;o e=p.K(h*h+g*g)-0.21*p.r(g*i);o a=p.24(g,h)-0.26*p.M(h*i);o d=e*p.M(a);o c=e*p.r(a);t[d,c]}q 1P(k,j){o d=3.C*O/A;o n=3.C;o m=S;o f=0.T;o g=1v(k-1e,j-35);o i=1x(k-1e,j-35);o b=j/A*n;o l=p.r(b);l=1-f*l*l;o h=p.K(l);g=(g*A)/((m*(1-f))/(l*h)*n);i=(i*A)/(m/h*p.M(b)*n);o c=j+g;o e=k+i;t[k*2-e,j*2-c]}q 3m(a,c){o b=29(a,c);t 1P(b[0],b[1])};',62,368,'||||||||||||||||||||||||var|Math|function|sin||return|||this||||180|http|141592653589793|lat|Map|jpg|TileLayer|lng|abs|com|sqrt||cos|111320|3000|for|BaiduLayer|Kj|6378245|006693421622965943|if|Tiles|new|tile|toFixed|132||221|||latLng||||||baidu|baseUrl|8080|sh|105|map|bdimg|latlng|break|length|attribution|target|_blank|href|inasmap|jsmap|Vp|www|Xr|tilesBaidu|Tp|transformlat|subdomains|transformlng|Road|74|initialize|checkLat|desc|Normal|checkLng|Projection|BaiduSphericalMercator|point|weixing|luwang|changgui|lngLatToPoint|prototype|call|getTileUrl|gcj02towgs84|Eu|online|bounds|CRS|extend|pow|pointToLngLat|86|styles|300||00002|||atan2||000003|0065|006|bd09togcj02|qt|00337398766765|7020202162|4481351|045890365|23393751|19931662|79682215|47186455|115964993|2797253|97236711|15602145|43661946|33752821|8477230|501135234|00220636496208|7020209128|51751|86112841131|3796837|749470245|992013|7397791013|1221952|21711287|1340652|697009075|620943|6990984312|144416|9293806241|0003441963504368392|7020576856|278|2353980772752|2485758|690035394|6070|750963243378|54821|18345352118|9540|606633304236|2710|55326746645|1405|483844121726|0003218135878613132|7020701615|00369383431289||00000898305509648872|6402795718|46104986909093|2351||343141331292||58060784298199|77738589078284|37238884252424|9939833816331|200|9824383106796|187|2403703815547|91|6087516669843|12890594|38765649603339|max|min|bd09towgs84|57121317296198|03801003308653|17337981|8362377|435856389565537e|75|000008983055097726239|78625201886289|96|32687599759846|85204757529826|60|36935905485877|40033549296737|50741931063887|28786674699375|10260144|87|030883460898826e|00000898305509983578|project|unproject|30071316287616|20037726|11708041|66|74293618442277|12474104|357984074871|33554432|Bounds|38371002664745|BEPSG3857|EPSG3857|code|EPSG|3857|projection|transformation||45380521110908|Transformation|29883767235584|32710905363475||||statics|6856817|2014|Baidu|GS|2012|6003|Data|5591021|981981304930552e|000008983055099779535|03278182852591|31678527705744|navinfo|65659298677277|NavInfo|cennavi|cn|CenNavi|365ditu|DaoDaoTong|options|minZoom|maxZoom|3481989|44255534477492|85341911805263|12923347998204|04625736007561|4482777|split|06|09191371068437e|000008983055096812155|00006995724062|10934304144901|00023663490511|6321817810242|00663494467273|03430082397953|00466043876332|2555164|890871144776878e|000008983055095805407|068298e|pl|Satellite|shangetu|it|009|type|sate|fm|47137025468032|sl|customLayerSQ||00000353937994|02145144861037|00001234426596|jslib|00010322952773|00000323890364||826088|customLayerSat|83|410526172116255e|0015702102444|1678043|customLayerJS|7020616939|customLayerDSN|1704480524535203|10338987376042340|26112667856603880|tilesDSN|newPics|customLayerNormalSH|35149669176653700|customLayerSatSH|0123456789|tileLayer|baiduLayer|wgs84togcj02|26595700718403920|10725012454188240|1800819912950474|82|0008277824516172526|7020463578|647795574|6671607|4082003173|641316|10774905663|51142|100|15171875531|160|320|51559|150|gcj02tobd09|12053065338|62167|5124939663|577472|913311935|9512032|67|823725'.split('|'),0,{}))
+    </script>
+</head>
+    <body>
+        <div id="map"></div>
+		<div id="infoLocation"></div>
+        <script>
+            //地图相关定义
+            var map;
+            var switchControl;
+            var baseLayer,
+                    normalLayer,
+                    roadLayer,
+                    satelliteLayer;
+            var markersLayer = new L.featureGroup();//普通小区图层
+            //初始化函数入口
+			window.onload = initAll();
+            function initAll(){
+                initBaiduMap();
+            }
+            //初始化百度地图
+            function initBaiduMap(){
+                //console.time('test')
+                //限制地图显示范围
+                var southWest = L.latLng(31.079115, 121.5702),
+                        northEast = L.latLng(31.237952, 121.753598),
+                        bounds = L.latLngBounds(southWest, northEast);
+                //初始化地图
+                map = new L.map('map',{
+                    minZoom: 1,
+                    maxZoom: 18,
+                    crs: L.CRS.BEPSG3857,
+                    //contextmenu: true,
+                    //maxBounds: bounds,
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([31.147534,121.487125], 13);
+                //自定义地图数据源
+                //tileSize==512
+                L.TileLayer.DSN1 = L.TileLayer.extend({
+                    getTileUrl: function (tilePoint) {
+                        return L.Util.template(this._url, L.extend({
+                            s: this._getSubdomain(tilePoint),
+                            z: tilePoint.z-1,
+                            x: tilePoint.x,
+                            y: tilePoint.y
+                        }, this.options));
+                    }
+                });
+                //tileSize==256
+                L.TileLayer.DSN = L.TileLayer.extend({
+                    getTileUrl: function (tilePoint) {
+                        return L.Util.template(this._url, L.extend({
+                            s: this._getSubdomain(tilePoint),
+                            z: tilePoint.z,
+                            x: tilePoint.x,
+                            y: tilePoint.y
+                        }, this.options));
+                    }
+                });
+                var urlDSN = 'http://' + baseUrl + ':8080/sh/tilesDSN/newPicsOrigin/{z}/{x}/{y}.jpg';
+                //var urlDSN = 'http://localhost:8080/tilesDSN/newPicsOrigin/{z}/{x}/{y}.jpg';
+                //var urlDSN = 'https://secure.parksandresorts.wdpromedia.com/media/maps/prod/shdr-baidu/9/{z}/{x}/{y}.jpg';
+                //baseLayer = new L.TileLayer.DSN(urlDSN,{tileSize: 256, minZoom: 14, maxZoom: 22}).addTo(map);//瓦片无转换
+                //baseLayer = L.tileLayer.baiduLayer('customLayerDSN.Map',{tileSize: 256, minZoom: 14, maxZoom: 21});//瓦片转换成百度原始形式
+                normalLayer = new L.tileLayer.baiduLayer('Normal.Map').addTo(map);
+                satelliteLayer = new L.tileLayer.baiduLayer('Satellite.Map');
+                roadLayer = new L.tileLayer.baiduLayer('Satellite.Road');
+                //console.log(roadLayer._leaflet_id);
+                //添加图层控制器
+                var baseLayers = {
+                    //"迪斯尼": baseLayer,
+                    "地图": normalLayer,
+                    "卫星": satelliteLayer
+                };
+                switchControl = L.control.layers(baseLayers, [],{autoZIndex:false,position:'topright'}).addTo(map);
+
+                L.control.scale({position: 'bottomright', imperial: false}).addTo(map);	//添加比例尺
+                //addCustomMarker(31.147534,121.663992);
+                //addSectorXQ([31.147534,121.663992],100,330,30);
+                //addSectorXQ([31.147534,121.663992],100,90,150);
+                //addSectorXQ([31.147534,121.663992],100,210,270);
+                //addSectorXQ([31.147534,121.653992],50,210,270);
+
+                map.on('mousemove', onMouseMove);//注册鼠标悬浮地图事件
+                map.on('baselayerchange', baseLayerChange);//注册底图切换事件
+            }
+            //添加自定义marker
+            function addCustomMarker(lat,lng){
+                markersLayer && map.removeLayer(markersLayer);
+                var myIcon = new L.icon({
+                    iconUrl: 'images/marker-icon.png',
+                    iconRetinaUrl: 'images/marker-icon@2x.png',
+                    iconSize: [25, 41],
+                    //iconAnchor: [22, 94],
+                    popupAnchor: [-3, -6],
+                    //shadowUrl: 'images/marker-shadow.png',
+                    //shadowRetinaUrl: 'images/marker-shadow@2x.png',
+                    shadowSize: [68, 95],
+                    shadowAnchor: [22, 94]
+                });
+                var popupContent = '经度:' + lng + '</br>纬度:' + lat;
+                L.marker([lat,lng]).bindPopup(popupContent).addTo(markersLayer);
+                map.addLayer(markersLayer);
+                map.setView([lat,lng],17);
+            }
+
+            //注册鼠标悬浮时显示鼠标停留的坐标事件,这儿显示坐标信息
+            function onMouseMove(e) {
+                var latlng = e.latlng;
+                document.getElementById("infoLocation").innerHTML = "纬度：" + latlng.lat.toString() + "，" + "经度：" + latlng.lng.toString();
+            }
+            //底图切换事件
+            function baseLayerChange(e){
+                //console.log(e)
+                var curLayerName = e.name;
+                var curZoom = map.getZoom();
+                var curCenter = map.getCenter();
+                //map.addLayer(roadLayer);
+                map.hasLayer(roadLayer) && (map.removeLayer(roadLayer));
+                //map.hasLayer(satelliteLayer) && map.removeLayer(satelliteLayer);
+                //map.hasLayer(baseLayer) && map.removeLayer(baseLayer);
+                //map.hasLayer(normalLayer) && map.removeLayer(normalLayer);
+                if(curLayerName === '地图'){
+                    //map.addLayer(normalLayer);
+                    //map.removeLayer(roadLayer);
+                    map.options.maxZoom = 18;
+                    map.options.minZoom = 10;
+                    if(curZoom>18){
+                        map.setView(curCenter,18);
+                    }
+                }else if(curLayerName === '迪斯尼'){
+                    //map.addLayer(baseLayer);
+                    //map.removeLayer(roadLayer);
+                    map.options.maxZoom = 21;
+                    map.options.minZoom = 14;
+                    map.setView([31.147534,121.663992],17);
+                }else{
+                    //map.addLayer(roadLayer);
+                    //map.addLayer(satelliteLayer);
+                    //map.removeLayer(roadLayer);
+                    map.options.maxZoom = 18;
+                    map.options.minZoom = 10;
+                    if(curZoom>18){
+                        map.setView(curCenter,18);
+                    }
+                    map.addLayer(roadLayer);
+                    roadLayer.bringToFront();
+                    //console.log(roadLayer,satelliteLayer);
+                }
+            }
+            function getUrlParam(sUrl, sKey) {
+                sUrl = sUrl.split('?')[1];//截取地址之后的所有参数
+                //sUrl = sUrl.replace(/[&#]/g,'');//删除所有特殊字符
+                //console.log(sUrl)
+                if(sKey !== ''){
+                    //console.log('不为空')
+                    //构造正则，并截取最新的sUrl
+                    var para = '(' + sKey + '=' + ')';
+                    var myReg1 = new RegExp(para,'g');
+                    //var myReg2 = /[A-Za-z0-9]+/g;//可以修改传中文或者数字参数
+                    var myReg2 = /^([\u4E00-\u9FA5]+，?)+$/g;
+                    var myReg = new RegExp(myReg1.source + myReg2.source,'g');
+                    //console.log(myReg)
+                    var temArray = sUrl.match(myReg);//得到的是含有参数分隔符的数组,如果只需要返回参数，则还需进行下面的转换
+                    //console.log(temArray)
+                    if(temArray){
+                        temArray = temArray.toString().replace(myReg1,'');//删除参数分隔符sKey=,得到的是字符串
+                        var result = temArray.split(',');//字符串转换为数组
+                        return result;
+                    }
+                    else{
+                        //console.log(sKey)
+                        return '';//传入的参数名称sKey有错或者参数名值为空
+                    }
+                }
+                if(sKey === ''){
+                    //console.log('为空')
+                    sUrl = sUrl.split(/[&#]/g);//以特殊字符为分隔符生成数组
+                    var resultObj = {};//最后需要返回的对象
+                    for(var i= 0, len = sUrl.length; i<len; ++i){
+                        var temValue = sUrl[i];
+                        var temArrayV = temValue.split('=');
+                        resultObj[temArrayV[0]] = temArrayV[1];
+                    }
+                    return resultObj;
+                }
+            }
+            //记忆转换法
+            function wgs84tobd09(lng,lat){
+                var temArr = wgs84togcj02(lng,lat);
+                return gcj02tobd09(temArr[0],temArr[1]);
+            }
+            if(locationUrl.indexOf('&lon=') !== -1){
+                var nameVal = getUrlParam(locationUrl,'');
+                console.log(nameVal);
+                var lat = parseFloat(nameVal.lat),
+                        lng = parseFloat(nameVal.lon);
+                var bdPoint = wgs84tobd09(lng,lat);
+                addCustomMarker(bdPoint[1],bdPoint[0]);
+            }
+            //addCustomMarker(31.13633,121.669319);
+        </script>
+    </body>
+</html>

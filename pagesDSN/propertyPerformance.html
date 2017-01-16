@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        b{font-family:Microsoft YaHei; color:#000000    ; line-height:15px; alignment:left; height:15px;font-size:15px; font-weight:bold;}
+        #detailedPropertyInfo{
+            position: absolute;
+            left:10px;
+            width:520px;
+            margin-top: 70px;
+            height:200px;
+            overflow-y: auto;
+
+            border-top:2px solid #DCDCDC;
+            line-height: 30px;
+            font-family:Microsoft YaHei;
+            color:#000000    ;
+            font-weight:bold;
+        }
+        #detailedPerformanceInfo{
+            position: absolute;
+            left:10px;
+            width:520px;
+            margin-top: 70px;
+            height:200px;
+            display: none;
+            visibility: hidden;
+            overflow-y: auto;
+
+            border-top:2px solid #DCDCDC;
+            line-height: 30px;
+            font-family:Microsoft YaHei;
+            color:#000000 ;
+            font-weight:bold;
+        }
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:10px;
+            background: #FFFFFF ;
+            outline: none;
+        }
+    </style>
+
+</head>
+<body>
+<div id="titleInfo" style="font-family:Microsoft YaHei;font-size:18px;font-weight:bold;line-height:30px;position:absolute;left: 10px;width: 500px;height: 40px;margin-top: 0px"></div>
+<div id="indexSelect" style="position:absolute;left: 100px;width: 400px;height: 20px;margin-top: 40px">
+    <table class="table">
+        <tr>
+            <td >
+                <input type="button" id="propertyCkick" style="width:130px; font-size: 15px"  class="button "   background-image=""  value="基本信息" align="middle" onclick="showPropertyInfo()"/>
+            </td>
+            <td >
+                <input type="button" id="performanceCkick" style="width:130px; font-size: 15px" class="button"   background-image=""  value="性能信息" align="middle" onclick="showPerformanceInfo()"/>
+            </td>
+        </tr>
+    </table>
+</div>
+<div id="detailedPropertyInfo">
+    <div id="nameDetailedPropertyInfo" style="position:absolute;left: 10px;width: 290px;height: 200px;margin-top: 10px"></div>
+    <div id="valueDetailedPropertyInfo" style="position:absolute;left: 300px;width: 200px;height: 200px;margin-top: 10px"></div>
+</div>
+<div id="detailedPerformanceInfo">
+    <div id="nameDetailedPerformanceInfo" style="position:absolute;left: 10px;width: 290px;height: 200px;margin-top: 10px"></div>
+    <div id="valueDetailedPerformanceInfo" style="position:absolute;left: 300px;width: 200px;height: 200px;margin-top: 10px"></div>
+</div>
+<div id="divWhoise" style="border:none; position: absolute;left:200px;margin-top: 100px">
+    <input type="image" src="../images/loading.gif"  width="124px" height="124px" align="middle" /><p>数据加载中，请稍后...</p>
+</div>
+<!-- ECharts单文件引入 -->
+<script src="../scripts/jquery-1.9.1.min.js"></script>
+<script src="../echarts/build/dist/echarts.js"></script>
+<script>
+    var baseUrl = "10.221.247.7";
+    var s=  window.location.href;
+    if(s.indexOf('10.10.46.60') != -1){
+        baseUrl = '10.10.46.60';
+    }
+
+    //var indexName = "上海西站";
+    //解决跨域请求数据问题
+    jQuery.support.cors = true;
+    jQuery.ajaxSetup({ scriptCharset: "utf-8" , contentType: "application/json; charset=utf-8"});
+
+    var indexName = window.location.search.split("?")[1];//获取页面参数
+    var heatDistricits = decodeURIComponent(indexName,"utf-8");//记录热点小区名称
+    //alert(heatDistricits);
+
+    var myData = new Date(),
+            year = myData.getFullYear().toString(),
+            month = myData.getMonth()+1,
+            day = (myData.getDate()-1).toString();//获得日期
+    if(month<10)
+        month = "0" + month;
+    else{
+        month = month;
+    }
+    var timeId = year + month + day+"0000";
+    //判断字符是否为纯小数或者整数
+    function isNumber(obj)
+    {
+        //var reg = new RegExp("^[0-9]$");
+        if (/^\d+\.\d+$/.test(obj) || /^-?\d+$/.test(obj))
+        {
+            //alert(obj+"是数字");
+            return true;
+        }
+        else
+        {
+            //alert(obj+"不是数字");
+            return false;
+        }
+    }
+    //超链接执行的函数
+    function detailedInformation(kpiName,name,unit){
+        //alert(kpiName);
+        //alert(name);
+        //alert(unit);
+        if (unit == "" || unit == " "){
+            unit = "单位：无";
+        }
+        if(unit == "%"){
+            unit="百分号";
+        }
+        window.open ("performanceInfo.html?"+heatDistricits+"!"+kpiName+"&"+name+"^"+unit+"", '_blank', 'height=300, width=1140, top=200,left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=no, status=no');
+    }
+
+    function showPropertyInfo() {
+        document.getElementById("propertyCkick").style.color = "#6495ED ";
+        document.getElementById("performanceCkick").style.color = "#000000 ";
+
+        document.getElementById("detailedPerformanceInfo").style.display = "none";
+        document.getElementById("detailedPerformanceInfo").style.visibility = "hidden";
+        document.getElementById("detailedPropertyInfo").style.display = "block";
+        document.getElementById("detailedPropertyInfo").style.visibility = "visible";
+        var infoName="",
+                infoValue ="";
+
+        $.getJSON("http://"+baseUrl+":8080//services/ws/rest/kpi/report/cell?timeId="+timeId+"&gType=by_day&cellName="+encodeURIComponent(heatDistricits), function (data) {
+            var objectData = data.rows;
+            var length = objectData.length;
+            //alert(length);
+            for (var i = 0; i < length; i++) {
+                var temValue = objectData[i].value,
+                        temName = objectData[i].name;
+                if (temName == "经度（天线的）" || temName == "维度（天线的）" ){
+                    infoName = infoName + "<b style='color: #000000'>" + temName + ":" + "</b> " + '</br>';
+                    infoValue = infoValue + '<b style="color: #6495ED  ">' + temValue + '</b>' + '</br>';
+                    continue;
+                }
+                if (temName == "常驻用户数" || temName == "常驻4G用户数" || temName == "常驻4G终端用户数"){
+                    continue;
+                }
+                if (isNumber(temValue)==false && (objectData[i].unit != "MB" && objectData[i].unit != "%" && objectData[i].unit != "个" && objectData[i].unit != "秒" && objectData[i].unit != "ERL")) {
+                    infoName = infoName + "<b style='color: #000000'>" + temName + ":" + "</b> " + '</br>';
+                    if(temValue.length > 13){
+                        temValue = temValue.slice(0,13);
+                    }
+                    infoValue = infoValue + '<b style="color: #6495ED  ">' + temValue + '</b>' + '</br>';
+                }
+            }
+            document.getElementById("nameDetailedPropertyInfo").innerHTML = infoName;
+            document.getElementById("valueDetailedPropertyInfo").innerHTML = infoValue;
+            $("#divWhoise").hide();
+        });
+    }
+    function showPerformanceInfo(){
+        document.getElementById("performanceCkick").style.color = "#6495ED ";
+        document.getElementById("propertyCkick").style.color = "#000000 ";
+
+        document.getElementById("detailedPropertyInfo").style.display="none";
+        document.getElementById("detailedPropertyInfo").style.visibility = "hidden";
+        document.getElementById("detailedPerformanceInfo").style.display="block";
+        document.getElementById("detailedPerformanceInfo").style.visibility = "visible";
+        var infoName="",
+                infoValue ="";
+        /*/
+        $.getJSON("http://10.221.247.7:8080//services/ws/rest/kpi/report/cell?timeId=201507120000&gType=by_day&cellName=M11%E4%B8%8A%E6%B5%B7%E8%A5%BF%E7%AB%99%E7%AB%99EG1_3", function (data) {
+            var objectData = data.rows;
+            var length = objectData.length;
+            //alert(length);
+            for (var i = length-1; i > 0; i--) {
+                if(objectData[i].name == "维度（天线的）"){
+                    break;
+                }
+                infoName = infoName + "<b>" + objectData[i].name+":"+ "</b> " + '</br>';
+                infoValue = infoValue +'<b style="color: #000000">'+  objectData[i].value +"&nbsp"+  objectData[i].unit+ '</b>' +'</br>';
+            }
+            document.getElementById("nameDetailedPerformanceInfo").innerHTML = infoName;
+            document.getElementById("valueDetailedPerformanceInfo").innerHTML = infoValue;
+        });
+        //*/
+        $.getJSON("http://"+baseUrl+":8080//services/ws/rest/kpi/report/cell?timeId="+timeId+"&gType=by_day&cellName="+encodeURIComponent(heatDistricits), function (data) {
+            var objectData = data.rows;
+            var length = objectData.length;
+            //alert(length);
+            for (var i = 0; i < length; i++) {
+                var temValue = objectData[i].value,
+                        temName = objectData[i].name;
+                if (temName == "经度（天线的）" || temName == "维度（天线的）" || temName == "当月天数"){
+                    continue;
+                }
+                if (isNumber(temValue) || objectData[i].unit == "MB" || objectData[i].unit == "%" || objectData[i].unit == "个" || objectData[i].unit == "秒" || objectData[i].unit == "ERL") {
+                    var kpiName = objectData[i].kpiName;//超链接的关键字
+                    var name = temName;//做趋势图的业务名称
+                    var unit = objectData[i].unit;//做趋势图的单位
+                    infoName = infoName + "<b style='color: #000000'>" + temName + ":" + "</b> " + '</br>';
+                    if( temValue!=""){
+                        //infoValue = infoValue + '<a href="#" onclick="detailedInformation(\''+kpiName+'\')">'+temValue + "&nbsp" +objectData[i].unit + '</a>'  + '</br>';
+                        infoValue = infoValue + '<a style="color: #6495ED" href="#" onclick="detailedInformation(\''+kpiName+'\',\''+name+'\',\''+unit+'\')">'+temValue + "&nbsp" +objectData[i].unit + '</a>'  + '</br>';
+                    }
+                    else{
+                        infoValue = infoValue + '<b style="color: #6495ED  ">' + temValue + "&nbsp"  + '</b>' + '</br>';
+                    }
+                }
+            }
+            document.getElementById("nameDetailedPerformanceInfo").innerHTML = infoName;
+            document.getElementById("valueDetailedPerformanceInfo").innerHTML = infoValue;
+        });
+    }
+    document.getElementById("titleInfo").innerHTML = "小区详情" + " 【" + heatDistricits + "】";
+    showPropertyInfo();
+</script>
+</body>
+</html>

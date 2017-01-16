@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>场景监控</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/style-map.css" />
+    <style>
+        #map{position: absolute; left: 0px; right: 0px; top: 0px; bottom: 0px;}
+        #showIndex{position:absolute; visibility: hidden; left: 0px; width:40px;top: 290px; bottom: 100px}
+        #hideIndex{position:absolute; visibility: hidden; overflow: hidden; left: 490px; width:40px; top: 290px; bottom: 100px;}
+        #indexSelect{
+            border: 1px solid darkgray;
+            background: #F5FFFA;
+            position: absolute;
+            visibility: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
+            left: 10px;
+            width: 480px;
+            top: 10%;
+            bottom: 6%;
+        }
+        .leaflet-control-layers-selector {top: -2px;}
+    </style>
+    <script src="scripts/jquery-1.9.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/leaflet.js"></script>
+	<script src="scripts/initMapUltimate.js"></script>
+    <script src="scripts/testData.js"></script>
+</head>
+<body>
+<div id="map"></div>
+<div id="showIndex">
+    <input type="image" src="images/show.png" title="显示" onclick="showIndexDiv()"/>
+</div>
+<div id="hideIndex">
+    <input type="image" src="images/hide.png" title="隐藏" onclick="hideIndexDIV()"/>
+</div>
+<div id="indexSelect">
+    <div class="tabbable tabs-left">
+        <ul id="dynamicMenu" class="nav nav-tabs"></ul>
+        <div id="secondMenu" class="tab-content"></div>
+    </div>
+</div>
+<script>
+    var baseUrl = '10.221.247.7';
+    var locationUrl = window.location.href;
+    locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+	var map;
+	window.onload = init();
+    //addDynamicMenu(testData);
+</script>
+</body>
+</html>

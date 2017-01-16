@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>道路保障</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="renderer" content="webkit">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="css/easyui.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/leaflet.draw.css" />
+    <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
+    <link rel="stylesheet" href="css/leaflet.markercluster.css" />
+    <link rel="stylesheet" href="css/leaflet-search.css" />
+    <link rel="stylesheet" href="css/Icon.Label.css" />
+    <link rel="stylesheet" href="css/leaflet.groupedlayercontrol.css" />
+    <link rel="stylesheet" href="css/style-road-guard-big.css" />
+    <!--link rel="stylesheet" href="css/L.Control.Zoomslider.css" /-->
+    <style>
+        html{overflow: hidden;}
+        body{ margin:0; padding:0; font-family: "Microsoft YaHei";}
+        h5{display: inline;}
+        h4{line-height: 10px;}
+        h3{margin-top: 0px; background-color: darkcyan; border: 2px solid gray;}
+        .collapse span{font-family: "Microsoft YaHei"; display: block;}
+        div a{font-family: "Microsoft YaHei"; font-size: 24px;}
+        #exchangeSub{ position: absolute; top:0; bottom:0; right: 0px; left:0; visibility: hidden;}
+        #map{ position: absolute; top:0; bottom:0; right: 0px; left:0; }
+        #mapOrSub{
+            position: absolute; left: 60px; top: 10px; height: 30px; width: 100px; background-color: #5F9EA0; border: none;
+        }
+        /*#map{ position: absolute; top:0; bottom:0; right: 0px; left:0; width: 3200px; height: 1200px; overflow: auto;}*/
+        #infoLocation{background-color: rgba(255,255,255,0.5); position: absolute; left: 10px;  bottom: 10px; font-size: 18px; line-height: 18px;}
+        #loading{visibility: hidden; position: absolute; background: none; top: 42%; left: 50%; width: 100px; height: 100px;}
+        #allIndexShow{
+            visibility: visible; background-color: #003250; position: absolute; top: 0px; bottom: 0px; right: 80px; width: 620px; border: none; overflow-y: auto; overflow-x: hidden;
+        }
+
+        #userData{
+            position: absolute; top: 0px; width: 100%; height: 290px; border: 2px solid #003250;
+        }
+        #dataThroughPut{
+            position: absolute; top: 290px; width: 100%; height: 290px; border: 2px solid #003250;
+        }
+        #hotApp{
+            position: absolute; top: 580px; width: 100%; height: 220px; border: 2px solid #003250;
+        }
+        #hotTerminal{
+            position: absolute; top: 810px; width: 100%; height: 290px; border: 2px solid #003250;
+        }
+        #showNavigate{
+            position: absolute; background: url("images/s2.png"); height: 100px; width: 50px; top: 420px; left: 60px; border: none; cursor: pointer; visibility: hidden;
+        }
+        #hideNavigate{
+            position: absolute; background: url("images/s1.png"); height: 100px; width: 50px; top: 420px; left: 594px; border: none; cursor: pointer;
+        }
+        .custom-detailed-info{margin-top: 10px; text-align: center;}
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:0px;
+            background: #252c34 ;
+            outline: none;
+            color: white;
+            font-size: 20px;
+            font-family: Microsoft YaHei;
+        }
+        .custom-title-wx{border-bottom: 1px solid cornflowerblue; width: 100%; height: 40px;}
+        .custom-button-left{position: absolute; left: 30px; width: 100px;}
+        .custom-button-right{position: absolute; left: 190px; width: 100px;}
+        .navbar-header{margin-top: 1px; text-align: center; border: 1px solid gray; background-color: gainsboro;}
+        .custom-info-device{margin-top: 16px;}
+        .custom-text-width{width: 60%;}
+        .leaflet-control-layers-selector {top: -5px;}
+        .leaflet-control-layers-group-selector{height: 20px;}
+        .leaflet-control-layers-group-name{font-size: 1.2em; color: cornflowerblue; text-align: match-parent;}
+        .leaflet-control-scale-line{text-align: center; font-size: 18px; line-height: 18px;}
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip{background-color: #252c34; color: white;}
+        .leaflet-control-layers-toggle {
+            background-image: url(images/layers-2x.png);
+            width: 60px;
+            height: 60px;
+        }
+        .leaflet-control-layers-base span{font-size: 20px;}
+        .leaflet-control-layers-overlays span{font-size: 20px;}
+        .leaflet-control-search .search-button{width: 40px; height: 40px;background-image: url(images/customSearch.png);}
+        .leaflet-control-search .search-input{height: 38px;}
+        .leaflet-draw-toolbar{width: 40px; height: 40px; background-color: white}
+        .leaflet-draw-toolbar a {
+            background-image: url('images/spritesheet-2x.png');
+            background-repeat: no-repeat;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
+            background-position: -130px -10px;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-edit-edit {
+            background-position: -310px -10px;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled {
+            background-position: -430px -10px;
+        }
+        .leaflet-draw-actions-top.leaflet-draw-actions-bottom a {
+            height: 32px;
+            line-height: 32px;
+            font-size: 20px;
+            margin-top: 4px;
+            margin-left: 14px;
+        }
+        .leaflet-draw-actions-top.leaflet-draw-actions-bottom a[title="Cancel editing, discards all changes."]{margin-left: -10px;}
+        .leaflet-bar a, .leaflet-bar a:hover {
+            background-color: #fff;
+            border-bottom: 1px solid #ccc;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: black;
+        }
+        .marker-cluster div{font-size: 36px; width: 40px; height: 40px; }
+        .sweet-deal-label {
+            background-color: rgba(255, 255, 255, 0.001);
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            color: #000000;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 9999;
+        }
+        .img-preview{
+            -moz-border-bottom-colors: none;
+            -moz-border-left-colors: none;
+            -moz-border-right-colors: none;
+            -moz-border-top-colors: none;
+            border-bottom-color: #B8B8B8;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            border-bottom-style: solid;
+            border-bottom-width: 1px;
+            border-image-outset: 0 0 0 0;
+            border-image-repeat: stretch stretch;
+            border-image-slice: 100% 100% 100% 100%;
+            border-image-source: none;
+            border-image-width: 1 1 1 1;
+            border-left-color-ltr-source: physical;
+            border-left-color-rtl-source: physical;
+            border-left-color-value: #B8B8B8;
+            border-left-style-ltr-source: physical;
+            border-left-style-rtl-source: physical;
+            border-left-style-value: solid;
+            border-left-width-ltr-source: physical;
+            border-left-width-rtl-source: physical;
+            border-left-width-value: 1px;
+            border-right-color-ltr-source: physical;
+            border-right-color-rtl-source: physical;
+            border-right-color-value: #B8B8B8;
+            border-right-style-ltr-source: physical;
+            border-right-style-rtl-source: physical;
+            border-right-style-value: solid;
+            border-right-width-ltr-source: physical;
+            border-right-width-rtl-source: physical;
+            border-right-width-value: 1px;
+            border-top-color: #B8B8B8;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            border-top-style: solid;
+            border-top-width: 1px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+            float: left;
+        }
+        .elevated_txt{cursor: pointer;}
+        .ctd1{cursor: pointer;}
+        .ttd1{
+            font-family: 'fzlantinghei-m-gbkregular';
+            width:22%;
+            font-size:21px;
+            padding-left:10px;
+            cursor: pointer;
+        }
+        .ttd1 span{
+            font-size:18px;
+            color:#1aabc8;
+        }
+
+        .ttd2{
+            font-family: 'lets_go_digitalregular';
+            width:25%;
+            font-size:32px;
+            padding-left:10px;
+        }
+        .ttd2 span{
+            font-size:18px;
+            color:#1aabc8;
+        }
+    </style>
+    <script>
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    </script>
+    <script src="scripts/jquery-1.9.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/jquery.easyui.min.js"></script>
+    <script src="scripts/leaflet.js"></script>
+    <script src="scripts/heatmap.js"></script>
+    <script src="scripts/leaflet-heatmap.js"></script>
+    <script src="scripts/leaflet.draw.js"></script>
+    <script src="scripts/leaflet.contextmenu.js"></script>
+    <script src="scripts/leaflet.markercluster-src.js"></script>
+    <script src="scripts/leaflet-search.js"></script>
+    <script src="scripts/Icon.Label.js"></script>
+    <script src="scripts/leaflet.groupedlayercontrol.js"></script>
+    <!--script src="scripts/L.Control.Zoomslider.js"></script-->
+    <script src="scripts/Semicircle.js"></script>
+    <script src="scripts/leaflet.baidu.min.js"></script>
+    <!--script src="scripts/testData.js"></script-->
+    <script src="scripts/roadGuardBig.js"></script>
+    <script>
+        //地铁线
+        var subway1 = new L.featureGroup(),
+                subway2 = new L.featureGroup(),
+                subway3 = new L.featureGroup(),
+                subway4 = new L.featureGroup(),
+                subway5 = new L.featureGroup(),
+                subway6 = new L.featureGroup(),
+                subway7 = new L.featureGroup(),
+                subway8 = new L.featureGroup(),
+                subway9 = new L.featureGroup(),
+                subway10 = new L.featureGroup(),
+                subway11 = new L.featureGroup();
+        //高架桥
+        var roadNH = new L.featureGroup(),
+                roadWH = new L.featureGroup(),
+                roadZH = new L.featureGroup(),
+                roadYA = new L.featureGroup(),
+                roadNB= new L.featureGroup();
+    </script>
+</head>
+    <body>
+        <div id="exchangeSub"></div>
+        <div id="map"></div>
+		<div id="infoLocation"></div>
+        <div id="loading"></div>
+        <div id="allIndexShow" class="img-preview">
+            <div id="userData" class="img-preview"></div>
+            <div id="dataThroughPut" class="img-preview"></div>
+            <div id="hotTerminal" class="img-preview"></div>
+            <div id="hotApp" class="img-preview"></div>
+        </div>
+        <div id="trendPlotFromChild" style="visibility: hidden; z-index: 999;"></div>
+        <div id="win"  style="visibility: hidden;"></div>
+        <div id="navigateMenu" class="UrbanRd_C">
+            <div class="UrbanRd_centre">
+                <div class="U_C2">
+                    <div class="UC2_left">&nbsp;</div>
+                    <!--Start-->
+                    <div class="UC2_list">
+                        <!--list1-->
+                        <div class="UC2_L1">
+                            <div class="cL1_title">
+                                <i class="icon icon-elevated"></i>
+                                <span class="elevated_txt">高架</span>
+                                <span class="ct_time">10:30</span>
+                            </div>
+                            <div class="cL1_content">
+                                <div class="cL1_c1">
+                                    <h>用户数</h>
+                                    <h1>92.44<span>&nbsp;万</span></h1>
+                                </div>
+                                <div class="cL1_c2">
+                                    <h>话务量</h>
+                                    <h1>1007.5<span>&nbsp;Erl</span></h1>
+                                </div>
+                                <div class="cL1_c3">
+                                    <h>流量</h>
+                                    <h1>87.42<span>&nbsp;GB</span></h1>
+                                </div>
+                                <div class="circle_line">
+                                    <div class="Cline1-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                    <div class="Cline2-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cL1_open">
+                            <table width="100%" border="0">
+                                <tr>
+                                    <td class="ctd1">内环<span>高架</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">中环<span>高架</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">外环<span>高架</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">延安路<span>高架</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">南北<span>高架</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                            </table>
+
+
+                        </div>
+                        <!--list2-->
+                        <div class="UC2_L1 cL1_mt">
+                            <div class="cL1_title">
+                                <i class="icon icon-metro"></i>
+                                <span class="elevated_txt">地铁</span>
+                                <span class="ct_time">10:30</span>
+                            </div>
+                            <div class="cL1_content">
+                                <div class="cL1_c1">
+                                    <h>用户数</h>
+                                    <h1>92.44<span>&nbsp;万</span></h1>
+                                </div>
+                                <div class="cL1_c2">
+                                    <h>话务量</h>
+                                    <h1>1007.5<span>&nbsp;Erl</span></h1>
+                                </div>
+                                <div class="cL1_c3">
+                                    <h>流量</h>
+                                    <h1>87.42<span>&nbsp;GB</span></h1>
+                                </div>
+                                <div class="circle_line">
+                                    <div class="Cline1-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                    <div class="Cline2-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="cL1_open">
+                            <table width="100%" border="0">
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">2号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">3号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">4号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">5号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">6号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                            </table>
+
+
+                        </div>
+                        <!--list3-->
+                        <div class="UC2_L1 cL1_mt2">
+                            <div class="cL1_title">
+                                <i class="icon icon-hi_speed"></i>
+                                <span class="elevated_txt">高速</span>
+                                <span class="ct_time">10:30</span>
+                            </div>
+                            <div class="cL1_content">
+                                <div class="cL1_c1">
+                                    <h>用户数</h>
+                                    <h1>92.44<span>&nbsp;万</span></h1>
+                                </div>
+                                <div class="cL1_c2">
+                                    <h>话务量</h>
+                                    <h1>1007.5<span>&nbsp;Erl</span></h1>
+                                </div>
+                                <div class="cL1_c3">
+                                    <h>流量</h>
+                                    <h1>87.42<span>&nbsp;GB</span></h1>
+                                </div>
+                                <div class="circle_line">
+                                    <div class="Cline1-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                    <div class="Cline2-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cL1_open">
+                            <table width="100%" border="0">
+                                <tr>
+                                    <td class="ctd1">上海<span>绕城高速</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">沈海<span>高速</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">沪陕<span>高速</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">沪渝<span>高速</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">沪常<span>高速</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">沪昆<span>高速</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                            </table>
+
+
+                        </div>
+                        <!--list4-->
+                        <div class="UC2_L1 cL1_mt">
+                            <div class="cL1_title">
+                                <i class="icon icon-hi_speed_rail"></i>
+                                <span class="elevated_txt">高铁</span>
+                                <span class="ct_time">10:30</span>
+                            </div>
+                            <div class="cL1_content">
+                                <div class="cL1_c1">
+                                    <h>用户数</h>
+                                    <h1>92.44<span>&nbsp;万</span></h1>
+                                </div>
+                                <div class="cL1_c2">
+                                    <h>话务量</h>
+                                    <h1>1007.5<span>&nbsp;Erl</span></h1>
+                                </div>
+                                <div class="cL1_c3">
+                                    <h>流量</h>
+                                    <h1>87.42<span>&nbsp;GB</span></h1>
+                                </div>
+                                <div class="circle_line">
+                                    <div class="Cline1-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                    <div class="Cline2-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cL1_open">
+                            <table width="100%" border="0">
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                            </table>
+
+
+                        </div>
+                        <!--list5-->
+                        <div class="UC2_L1 cL1_mt">
+                            <div class="cL1_title">
+                                <i class="icon icon-traffic_hub"></i>
+                                <span class="elevated_txt">交通枢纽</span>
+                                <span class="ct_time">10:30</span>
+                            </div>
+                            <div class="cL1_content">
+                                <div class="cL1_c1">
+                                    <h>用户数</h>
+                                    <h1>92.44<span>&nbsp;万</span></h1>
+                                </div>
+                                <div class="cL1_c2">
+                                    <h>话务量</h>
+                                    <h1>1007.5<span>&nbsp;Erl</span></h1>
+                                </div>
+                                <div class="cL1_c3">
+                                    <h>流量</h>
+                                    <h1>87.42<span>&nbsp;GB</span></h1>
+                                </div>
+                                <div class="circle_line">
+                                    <div class="Cline1-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                    <div class="Cline2-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cL1_open">
+                            <table width="100%" border="0">
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                            </table>
+
+
+                        </div>
+                        <!--list6-->
+                        <div class="UC2_L1 cL1_mt">
+                            <div class="cL1_title">
+                                <i class="icon icon-scenic_spot"></i>
+                                <span class="elevated_txt">景点</span>
+                                <span class="ct_time">10:30</span>
+                            </div>
+                            <div class="cL1_content">
+                                <div class="cL1_c1">
+                                    <h>用户数</h>
+                                    <h1>92.44<span>&nbsp;万</span></h1>
+                                </div>
+                                <div class="cL1_c2">
+                                    <h>话务量</h>
+                                    <h1>1007.5<span>&nbsp;Erl</span></h1>
+                                </div>
+                                <div class="cL1_c3">
+                                    <h>流量</h>
+                                    <h1>87.42<span>&nbsp;GB</span></h1>
+                                </div>
+                                <div class="circle_line">
+                                    <div class="Cline1-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                    <div class="Cline2-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cL1_open">
+                            <table width="100%" border="0">
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                            </table>
+
+
+                        </div>
+                        <!--list7-->
+                        <div class="UC2_L1 cL1_mt">
+                            <div class="cL1_title">
+                                <i class="icon icon-business_zone"></i>
+                                <span class="elevated_txt">商业区</span>
+                                <span class="ct_time">10:30</span>
+                            </div>
+                            <div class="cL1_content">
+                                <div class="cL1_c1">
+                                    <h>用户数</h>
+                                    <h1>92.44<span>&nbsp;万</span></h1>
+                                </div>
+                                <div class="cL1_c2">
+                                    <h>话务量</h>
+                                    <h1>1007.5<span>&nbsp;Erl</span></h1>
+                                </div>
+                                <div class="cL1_c3">
+                                    <h>流量</h>
+                                    <h1>87.42<span>&nbsp;GB</span></h1>
+                                </div>
+                                <div class="circle_line">
+                                    <div class="Cline1-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                    <div class="Cline2-box">
+                                        <div class="line-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cL1_open">
+                            <table width="100%" border="0">
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                    <td>&nbsp;</td>
+                                    <td class="ctd1">1号线<span>地铁</span></td>
+                                    <td class="ctd2">6.33<span>&nbsp;万</span></td>
+                                </tr>
+                            </table>
+
+
+                        </div>
+                        <!--END-->
+                    </div>
+                    <!---->
+                </div>
+            </div>
+        </div>
+        <div id="showNavigate" onclick="showNavigateMenu()"></div>
+        <div id="hideNavigate" onclick="hideNavigateMenu()"></div>
+        <input type="button" id="mapOrSub" value="地铁" class="button img-preview" />
+        <script>
+            //地图相关定义
+            var map;
+            var switchControl;
+            var baseLayer,
+                    normalLayer,
+                    roadLayer,
+                    satelliteLayer;
+            var markersLayer = new L.featureGroup();//普通小区图层
+            var polygonLayer = new L.featureGroup();//热点区域多边形图层
+            var sectorLayer = new L.featureGroup();//扇形小区图层
+            var labelLayer = new L.featureGroup();//标注图层
+            var districtsLayer = new L.featureGroup();//框选查询及搜索查询到的小区
+            var temLayer = new L.featureGroup();//超链接点击时的单个小区图层
+            var rasterLayer = new L.featureGroup();//网格图层
+            var markerClusters = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 100, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var heatMapLayer;//热力图
+            //指标相关定义
+            var heatIndexDis = '高架';//初始化热点区域，动态改变
+            var radiusHeatMap = 0.0008;//热力图渲染半径，动态改变
+            var cacheHeatMapData = [];//缓存热力图数据
+            var lastZoomLevel = 13;//上次地图层级
+            var detailedInfoVector = [];//缓存小区数据
+            //var maxPosHeatMap = [31.94256,122.104797],//热力图渲染区域最大最小坐标
+            //        minPosHeatMap = [30.61350,120.92651];
+            var heatFlag = false; //控制热力图是否选中
+            //初始化函数入口
+			window.onload = initAll();
+            function initAll(){
+                initBaiduMap();
+                //getDetailedInfo();
+                //addDynamicMenu(testData);
+                //addXQ2Map(heatIndexDis);
+                addWangGe();
+                addMedianCycleRoad();
+                //addSubway();
+                addPosNBGJ('南北高架',heatFlag);
+                showAllIndexInfo(heatIndexDis);
+                callHWL();
+                addImportantData();
+                addDetailedInfo(heatIndexDis);
+                initEventClick();
+            }
+            function initEventClick(){
+                $('.elevated_txt').on('click',function(){
+                    var disVal = this.innerHTML;
+                    heatIndexDis = disVal;
+                    //addXQ2Map(heatIndexDis);
+                    showAllIndexInfo(heatIndexDis);
+                    createCustomDiv(heatIndexDis);//展开二级菜单
+                    clearThirdMenu();//清除三级菜单
+                    //展开面板，备用
+//                $('.cL1_open').css({'display': 'inline', 'visibility': 'hidden'});
+//                var parentDiv = $(this).parent();
+//                var openDiv = parentDiv.parent().next();
+//                openDiv.css({'display': 'block', 'visibility': 'visible'});
+                });
+                $('#mapOrSub').on('click',function(){
+                    var temVal = this.value;
+                    exchange(temVal);
+                });
+            }
+            setInterval(function () {
+                addPosNBGJ('南北高架',heatFlag);
+                showAllIndexInfo(heatIndexDis);
+                callHWL();
+                addImportantData();
+                addDetailedInfo(heatIndexDis);
+            },1000*60*5);
+        </script>
+    </body>
+</html>

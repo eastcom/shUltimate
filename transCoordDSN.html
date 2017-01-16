@@ -1,0 +1,221 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>迪斯尼保障</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!--meta name="renderer" content="webkit|ie-comp|ie-stand"-->
+    <meta name="renderer" content="webkit">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
+    <!--link rel="stylesheet" href="css/Icon.Label.css" /-->
+    <link rel="stylesheet" href="css/custom.css" />
+    <style>
+        body{ margin:0; padding:0; font-family: "Microsoft YaHei";}
+        h5{display: inline;}
+        h4{line-height: 10px;}
+        h3{margin-top: 0px; background-color: darkcyan; border: 2px solid gray;}
+        .collapse span{font-family: "Microsoft YaHei"; display: block;}
+        div a{font-family: "Microsoft YaHei"; font-size: 24px; }
+        #map{ position: absolute; top:0; bottom:0; right:0; left:0; z-index: -1;}
+        #infoLocation{position: absolute; left: 10px;  bottom: 10px;}
+        #showIndex{position:absolute; right: 2px; width:40px; top: 280px; bottom: 100px; visibility: hidden;}
+        #hideIndex{position:absolute; right: 252px; width:40px; top: 280px; bottom: 100px; visibility: hidden; }
+        #indexSelect{
+            border: 1px solid #BEBEBE    ;
+            background: #FFFFFF ;
+            position: absolute;
+            visibility: hidden;
+            overflow-y: auto;
+            right: 2px;
+            width: 250px;
+            top: 10%;
+            bottom: 1%
+        }
+        #indexSelectSB{
+            border: 1px solid #BEBEBE    ;
+            background: #FFFFFF ;
+            position: absolute;
+            visibility: hidden;
+            overflow-y: auto;
+            right: 2px;
+            width: 250px;
+            top: 10%;
+            bottom: 1%
+        }
+        .navbar-header{margin-top: 1px; text-align: center; border: 1px solid gray; background-color: gainsboro;}
+        .custom-info-device{margin-top: 16px;}
+        .custom-text-width{width: 60%;}
+        .leaflet-control-layers-selector {top: -2px;}
+		.leaflet-control-scale-line{text-align: center;}
+        .sweet-deal-label {
+            background-color: rgba(255, 255, 255, 0.001);
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            color: #000000;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+	<script>
+            var baseUrl = '10.221.247.7';
+            var locationUrl = window.location.href;
+            locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+        </script>
+    <script src="scripts/leaflet.js"></script>
+    <!--script src="scripts/Icon.Label.js"></script-->
+    <script src="scripts/customContextMenu.js"></script>
+    <script src="scripts/jquery-1.9.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/leaflet.baidu.min.js"></script>
+    <script src="scripts/initMapTransDSN.js"></script>
+    <!--script src="scripts/polygonData.js"></script-->
+</head>
+<body>
+<div id="map"></div>
+<div id="infoLocation"></div>
+<div id="showIndex">
+    <input type="image" src="images/right.png" title="显示"  onclick="showIndexDiv()"/>
+</div>
+<div id="hideIndex">
+    <input type="image" src="images/left.png" title="隐藏"  onclick="hideIndexDIV()"/>
+</div>
+<div id="indexSelect" class="img-preview" >
+    <h3>&nbsp;小区查询</h3>
+    <div>
+        <h5>&nbsp;&nbsp;地市:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h5>
+        <input type="text" class="custom-text-width"/>
+    </div>
+    <div>
+        <h5>&nbsp;&nbsp;区县:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h5>
+        <input type="text" class="custom-text-width"/>
+    </div>
+    <div>
+        <h5>&nbsp;&nbsp;网络名称:</h5>
+        <input type="text" class="custom-text-width"/>
+    </div>
+    <div>
+        <h5>&nbsp;&nbsp;小区名称:</h5>
+        <input type="text" class="custom-text-width"/>
+    </div>
+    <div style="margin-top: 10%;">
+        <input type="button" class="btn btn-default" style="margin-left: 15%" value="重置"/>
+        <input type="button" id="queryXQ" class="btn btn-default" style="margin-left: 25%" value="查询"/>
+    </div>
+</div>
+<div id="indexSelectSB" class="img-preview" >
+    <div style="background-color: darkcyan; margin-top: 0px;">
+        <h3>&nbsp;设备查询</h3>
+    </div>
+    <div>
+        <h5>&nbsp;&nbsp;设备名称:</h5>
+        <input type="text" class="custom-text-width"/>
+    </div>
+    <div>
+        <h5>&nbsp;&nbsp;用户账户:</h5>
+        <input type="text" class="custom-text-width"/>
+    </div>
+    <div>
+        <h5>&nbsp;&nbsp;地址:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h5>
+        <input type="text" class="custom-text-width"/>
+    </div>
+    <div style="margin-top: 10%;">
+        <input type="button" class="btn btn-default" style="margin-left: 15%" value="重置"/>
+        <input type="button" id="queryXSB" class="btn btn-default" style="margin-left: 25%" value="查询"/>
+    </div>
+    <div style="background-color: darkcyan">
+        <h3>&nbsp;设备详情</h3>
+    </div>
+    <div class="navbar-header" >
+        <a class="navbar-brand" data-toggle="collapse"  data-target="#example1" href="#">光交箱</a>
+    </div>
+    <div class="collapse navbar-collapse" id="example1" >
+        <div>
+            <h4>&nbsp;分光器</h4>
+            <span>&nbsp;&nbsp;上联PON口:</span>
+            <span>&nbsp;&nbsp;下联二级分光器:</span>
+        </div>
+        <div class="custom-info-device">
+            <h4>&nbsp;法兰盘</h4>
+            <span>&nbsp;&nbsp;上联PON口:</span>
+            <span>&nbsp;&nbsp;下联二级分光器:</span>
+        </div>
+        <div class="custom-info-device">
+            <h4>&nbsp;ONU</h4>
+            <span>&nbsp;&nbsp;设备名称:</span>
+            <span>&nbsp;&nbsp;IP地址:</span>
+            <span>&nbsp;&nbsp;设备型号:</span>
+        </div>
+    </div>
+    <div class="navbar-header" >
+        <a class="navbar-brand" data-toggle="collapse"  data-target="#example2" href="#">分纤箱</a>
+    </div>
+    <div class="collapse navbar-collapse" id="example2">
+        <div>
+            <h5>&nbsp;&nbsp;设备名称:</h5>
+            <input type="text" class="custom-text-width"/>
+        </div>
+        <div>
+            <h5>&nbsp;&nbsp;用户账户:</h5>
+            <input type="text" class="custom-text-width"/>
+        </div>
+    </div>
+    <div class="navbar-header" >
+        <a class="navbar-brand" data-toggle="collapse"  data-target="#example3" href="#">多媒体箱</a>
+    </div>
+    <div class="collapse navbar-collapse" id="example3">
+        <div>
+            <h5>&nbsp;&nbsp;设备名称:</h5>
+            <input type="text" class="custom-text-width"/>
+        </div>
+        <div>
+            <h5>&nbsp;&nbsp;用户账户:</h5>
+            <input type="text" class="custom-text-width"/>
+        </div>
+    </div>
+    <div class="navbar-header" >
+        <a class="navbar-brand" data-toggle="collapse"  data-target="#example4" href="#">管道线路</a>
+    </div>
+    <div class="collapse navbar-collapse" id="example4">
+        <div>
+            <h5>&nbsp;&nbsp;设备名称:</h5>
+            <input type="text" class="custom-text-width"/>
+        </div>
+        <div>
+            <h5>&nbsp;&nbsp;用户账户:</h5>
+            <input type="text" class="custom-text-width"/>
+        </div>
+    </div>
+    <div class="navbar-header" >
+        <a class="navbar-brand" data-toggle="collapse"  data-target="#example5" href="#">覆盖楼宇</a>
+    </div>
+    <div class="collapse navbar-collapse" id="example5">
+        <div>
+            <h5>&nbsp;&nbsp;设备名称:</h5>
+            <input type="text" class="custom-text-width"/>
+        </div>
+        <div>
+            <h5>&nbsp;&nbsp;用户账户:</h5>
+            <input type="text" class="custom-text-width"/>
+        </div>
+    </div>
+</div>
+<script>
+    var baseUrl = '10.40.102.17';
+    var map;
+    var markerLayer = new L.featureGroup(),
+            lineLayer = new L.featureGroup(),
+            polygonLayer = new L.featureGroup(),
+            xiangtiLayer = new L.featureGroup(),
+            rasterLayer = new L.featureGroup(),
+            labelLayer = new L.featureGroup();//存放标注图层;
+    //var clusterLayer = new L.MarkerClusterGroup();
+    var switchControl;
+    var legendControl = L.control({position: 'bottomright'});
+    $(document).ready(initBaiduMap());
+    //$('#queryXQ').on('click',queryXQHZ);
+</script>
+</body>
+</html>

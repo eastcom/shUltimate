@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        b{font-family:Microsoft YaHei; color:#ffffff;  text-align: center; line-height:26px; text-align: center; alignment:left; height:26px;font-size:18px; font-weight:bold;}
+        #detailedInfo{width: 600px; height: 270px; background-color: #003250; margin-top: -30px; border: none;}
+        #infoAll{width: 600px; height: 290px; background-color: #003250; border: none; }
+        #title{
+            border-bottom: 2px solid #db9f27;
+            width: 100%;
+        }
+        #loading{visibility: hidden; position: absolute; background: none; top: 50%; left: 50%; width: 100px; height: 100px;}
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:10px;
+            background: #FFFFFF ;
+            outline: none;
+        }
+
+        div{font-family: Microsoft YaHei; color: #ffffff; font-size: 18px;}
+        a{
+            color: white;
+        }
+        a :before{
+            color: white;
+        }
+        a :visited{
+            color: white;
+        }
+        a :hover{
+            color: whitesmoke;
+        }
+    </style>
+    <script src="../scripts/jquery-1.9.1.min.js"></script>
+    <script src="../echarts/build/dist/echarts.js"></script>
+</head>
+<body>
+<div id="infoAll">
+    <div id="title" >
+        <table>
+            <tr>
+                <td><img src="images/end.png" style="width: 32px; height: 32px; margin-left: 0px;"/></td>
+                <td><b id="disTitle" style="font-size: 26px;">网络质量指标</b></td>
+            </tr>
+        </table>
+    </div>
+    <div id="detailedInfo"></div>
+</div>
+<div id="loading"></div>
+<script>
+    var baseUrl = '10.221.247.7';
+    var locationUrl = window.location.href;
+    locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    // ECharts路径配置
+    require.config({
+        paths: {
+            echarts: '../echarts/build/dist'
+        }
+    });
+    function callServer(str){
+        var timeBegin = getCurrentTimeHour(1),
+                timeEnd = getCurrentTimeMin(5);
+        var userUrl = 'http://' + baseUrl + ':8080/stream/ue/quality/hotspot-times?timeBegin=' + timeBegin + '&timeEnd=' +timeEnd + '&hotspot=' + encodeURIComponent(str);
+        //console.log(userUrl);
+        $.ajax({
+            url: userUrl,
+            type: 'get',
+            dataType: 'json',
+            data: {},
+            beforeSend: function(XMLHttpRequest){
+                document.getElementById('loading').style.visibility = 'visible';
+                $('#loading').html("<img src='../images/loader1.gif' />");
+            },
+            complete: function(XMLHttpRequest,textStatus){
+                document.getElementById('loading').style.visibility = 'hidden';
+                $('#loading').empty();
+            }
+        })
+                .done(function(data){
+                    //console.log(data);
+                    var index1 = '4G承载成功率',
+                            index2 = '4G附着成功率',
+                            index3 = 'HTTP时延',
+                            index4 = 'HTTP下行速率500k';
+                            //index5 = '4G下行速率500k';
+                    var timeData = [],
+                            cgl4G = [],
+                            sy4G = [];
+                    for(var i= 0,lenI=data.length; i<lenI; ++i){
+                        var targetObj = data[i];
+                        timeData.push(targetObj.time.substring(11,16));
+                        cgl4G.push((parseInt(targetObj[index4] * 100)/100/1024).toFixed(2));
+                        sy4G.push((parseInt(targetObj[index3] * 100)/100).toFixed(2));
+                    }
+                    //console.log(cgl4G);
+                    require(
+                            [
+                                'echarts',
+                                'echarts/chart/bar',
+                                'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                            ],
+                            function (ec) {
+                                // 基于准备好的dom，初始化echarts图表
+                                var myChart = ec.init(document.getElementById('detailedInfo'));
+                                var option = {
+                                    title : {
+                                        x: 'center',
+                                        textStyle: {
+                                            fontSize: 30,
+                                            color: '#ffffff'
+                                        }
+                                        //'text': str + ' 热门终端'
+                                    },
+                                    axis: {
+                                        axisLabel: {
+                                            textStyle: {
+                                                color: '#ffffff'
+                                            }
+                                        }
+                                    },
+                                    tooltip : {
+                                        formatter: function(params) {
+                                            //console.log(params);
+                                            return params[0].name + '<br/>'
+                                                    + params[0].seriesName + ' : ' + params[0].value + ' (MB)<br/>'
+                                                    + params[1].seriesName + ' : ' + -params[1].value + ' (ms)';
+                                        },
+                                        'trigger':'axis'
+                                    },
+                                    legend : {
+                                        y: 'bottom',
+                                        x: 'center',
+                                        textStyle: {
+                                            fontSize: 24,
+                                            color: '#ffffff'
+                                        },
+                                        'data': ['HTTP下行速率','HTTP时延']
+                                    },
+                                    calculable : true,
+                                    grid: {
+                                        x: '10%',
+                                        width: '78%',
+                                        borderWidth: 0
+                                        //backgroundColor: '#252c34'
+                                    },
+                                    xAxis : [{
+                                        'type':'category',
+                                        axisLabel: {
+                                            textStyle: {
+                                                fontSize: 20,
+                                                color: '#ffffff'
+                                            }
+                                        },
+                                        splitLine: {
+                                            show: true,
+                                            lineStyle: {
+                                                color: ['#003250'],
+                                                width: 1,
+                                                type: 'solid'
+                                            }
+                                        },
+                                        boundaryGap : false,
+                                        axisLine: {onZero: false},
+                                        'data': timeData
+                                    }],
+                                    yAxis : [
+                                        {
+                                            'type':'value',
+                                            splitNumber: 2,
+                                            axisLabel: {
+                                                textStyle: {
+                                                    fontSize: 20,
+                                                    color: '#ffffff'
+                                                }
+                                            },
+                                            nameTextStyle: {
+                                                fontSize: 20,
+                                                color: '#00fcff'
+                                            },
+                                            //max: 100,
+                                            splitLine: {
+                                                show: true,
+                                                lineStyle: {
+                                                    color: ['#003250'],
+                                                    width: 1,
+                                                    type: 'solid'
+                                                }
+                                            },
+                                            'name':'下行速率(MB)'
+                                        },
+                                        {
+                                            'type':'value',
+                                            splitNumber: 3,
+                                            axisLabel: {
+                                                textStyle: {
+                                                    fontSize: 20,
+                                                    color: '#ffffff'
+                                                },
+                                                formatter: function(v){
+                                                    return - v;
+                                                }
+                                            },
+                                            nameTextStyle: {
+                                                fontSize: 20,
+                                                color: '#00fcff'
+                                            },
+                                            splitLine: {
+                                                show: true,
+                                                lineStyle: {
+                                                    color: ['#003250'],
+                                                    width: 1,
+                                                    type: 'solid'
+                                                }
+                                            },
+                                            inverse: true,
+                                            'name':'时延(ms)'
+                                        }
+                                    ],
+                                    series : [
+                                        {
+                                            'name':'HTTP下行速率',
+                                            'type':'line',
+                                            hoverAnimation: false,
+                                            itemStyle: {
+                                                normal: {
+                                                    color:'#00f859  '
+                                                    //areaStyle: {type: 'default'}
+                                                }
+                                            },
+                                            lineStyle: {
+                                                normal: {
+                                                    width: 1
+                                                }
+                                            },
+                                            'data': cgl4G
+                                        },
+                                        {
+                                            'name':'HTTP时延',
+                                            'type':'line',
+                                            hoverAnimation: false,
+                                            itemStyle: {
+                                                normal: {
+                                                    color:'#fff000  '
+                                                    //areaStyle: {type: 'default'}
+                                                }
+                                            },
+                                            lineStyle: {
+                                                normal: {
+                                                    width: 1
+                                                }
+                                            },
+                                            yAxisIndex: 1,
+                                            'data':  (function(){
+                                                var len = sy4G.length;
+                                                while(len--) {
+                                                    sy4G[len] *= -1;
+                                                }
+                                                return sy4G;
+                                            })()
+                                        }
+                                    ]
+                                };
+                                myChart.setOption(option,true);
+                            }
+                    );
+                });
+    }
+    function detailedInformation(str,index){
+        window.open ("infowlzlzb.html?name="+encodeURIComponent(str) + "&index=" + encodeURIComponent(index), '_blank', 'height=330, width=1130, top=200,left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=no, status=no');
+    }
+    //获得当前时间倒推n分钟
+    function getCurrentTimeMin(n){
+        var nowDate = new Date();
+        var min = nowDate.getMinutes(),
+                hour = nowDate.getHours(),
+                date = nowDate.getDate(),
+                month = nowDate.getMonth() + 1 ,
+                year = nowDate.getFullYear();
+        //min<n && (hour -= 1, min = min + 60 - n);
+        if(hour === 0){
+            hour += 24;
+        }
+        if(min<n){
+            hour -= 1;
+            //if(hour<0) hour += 1;
+            min = min + 60 - n;
+        }
+        min<n || ( min -= n);
+        if(hour === 24){
+            hour = 0;
+        }
+        var result = year + '-' + month + '-' + date + ' ' + hour + ':' + min + ':' + '00';
+        //console.log(result)
+        return result;
+    }
+    //获得当前时间倒推n小时
+    function getCurrentTimeHour(n){
+        var nowDate = new Date();
+        var min = nowDate.getMinutes(),
+                hour = nowDate.getHours(),
+                date = nowDate.getDate(),
+                month = nowDate.getMonth() + 1 ,
+                year = nowDate.getFullYear();
+        //var hour = 2;
+        if(hour < n){
+            hour += 24;
+        }
+        hour -= n;
+        if(hour === 24) {
+            hour = 0;
+        }
+        if(min <10){
+            min = '0' + min;
+            if(hour <0){
+                hour = 0;
+            }
+        }
+        var result = year + '-' + month + '-' + date + ' ' + hour + ':' + min + ':' + '00';
+        //console.log(result)
+        return result;
+    }
+    function getUrlParam(sUrl, sKey) {
+        sUrl = sUrl.split('?')[1];//截取地址之后的所有参数
+        //sUrl = sUrl.replace(/[&#]/g,'');//删除所有特殊字符
+        //console.log(sUrl)
+        if(sKey !== ''){
+            //console.log('不为空')
+            //构造正则，并截取最新的sUrl
+            var para = '(' + sKey + '=' + ')';
+            var myReg1 = new RegExp(para,'g');
+            //var myReg2 = /[A-Za-z0-9]+/g;//可以修改传中文或者数字参数
+            var myReg2 = /^([\u4E00-\u9FA5]+，?)+$/g;
+            var myReg = new RegExp(myReg1.source + myReg2.source,'g');
+            //console.log(myReg)
+            var temArray = sUrl.match(myReg);//得到的是含有参数分隔符的数组,如果只需要返回参数，则还需进行下面的转换
+            //console.log(temArray)
+            if(temArray){
+                temArray = temArray.toString().replace(myReg1,'');//删除参数分隔符sKey=,得到的是字符串
+                var result = temArray.split(',');//字符串转换为数组
+                return result;
+            }
+            else{
+                //console.log(sKey)
+                return '';//传入的参数名称sKey有错或者参数名值为空
+            }
+        }
+        if(sKey === ''){
+            //console.log('为空')
+            sUrl = sUrl.split(/[&#]/g);//以特殊字符为分隔符生成数组
+            var resultObj = {};//最后需要返回的对象
+            for(var i= 0, len = sUrl.length; i<len; ++i){
+                var temValue = sUrl[i];
+                var temArrayV = temValue.split('=');
+                resultObj[temArrayV[0]] = temArrayV[1];
+            }
+            return resultObj;
+        }
+    }
+    var nameVal = getUrlParam(locationUrl,'');
+    //callServer('中国博览会')
+    var disName = decodeURIComponent(nameVal.name);
+    callServer(disName);
+    //document.getElementById('disTitle').innerHTML = disName + '  网络质量指标';
+</script>
+</body>
+</html>

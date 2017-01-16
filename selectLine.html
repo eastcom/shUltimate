@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>迪斯尼保障</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="renderer" content="webkit">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="css/easyui.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/leaflet.draw.css" />
+    <link rel="stylesheet" href="css/leaflet.markercluster.css" />
+    <link rel="stylesheet" href="css/leaflet-search.css" />
+    <link rel="stylesheet" href="css/Icon.Label.css" />
+    <link rel="stylesheet" href="css/leaflet.groupedlayercontrol.css" />
+    <link rel="stylesheet" href="css/L.Control.Zoomslider.css" />
+    <style>
+        body{ margin:0; padding:0; font-family: "Microsoft YaHei";}
+        h5{display: inline;}
+        h4{line-height: 10px;}
+        h3{margin-top: 0px; background-color: darkcyan; border: 2px solid gray;}
+        .collapse span{font-family: "Microsoft YaHei"; display: block;}
+        div a{font-family: "Microsoft YaHei"; font-size: 24px;}
+        #map{ position: absolute; top:0; bottom:0; right: 0px; left:0; z-index: -1;}
+        #infoLocation{position: absolute; left: 10px;  bottom: 10px;}
+        #loading{visibility: hidden; position: absolute; background: none; top: 42%; left: 50%; width: 100px; height: 100px;}
+        #infoAll{position: absolute; right: 0px; top: 0px; bottom: 0px; width: 300px; background-color: #252c34;}
+        #topXQ{position: absolute; top: 10px; width: 99%; height: 40%; border: none;}
+        #topCG{position: absolute; top: 50%; width: 99%; height: 40%; border: none;}
+        #nameXQ{position: absolute; left: 2px; width: 48%; height: 100%; cursor: pointer;}
+        #valueXQ{position: absolute; left: 50%; width: 48%; height: 100%;}
+        #nameCG{position: absolute; left: 2px; width: 48%; height: 100%; cursor: pointer;}
+        #valueCG{position: absolute; left: 50%; width: 48%; height: 100%;}
+        #infoAll div{font-family: "Microsoft YaHei"; font-size: 18px; color: white;}
+        #infoAll div a{font-family: "Microsoft YaHei"; font-size: 18px; color: white;}
+        #showIndex{position:absolute; visibility: visible; left: 0px; width:40px;top: 290px; bottom: 100px}
+        #hideIndex{position:absolute; visibility: hidden; overflow: hidden; left: 490px; width:40px; top: 290px; bottom: 100px;}
+        #indexSelect{
+            border: 1px solid darkgray;
+            background: #F5FFFA;
+            position: absolute;
+            visibility: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
+            left: 10px;
+            width: 480px;
+            top: 10%;
+            bottom: 6%;
+        }
+        #indexSelect a{font-family: "Microsoft YaHei"; font-size: 16px;}
+        .custom-detailed-info{margin-top: 10px; text-align: center;}
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:0px;
+            background: #252c34 ;
+            outline: none;
+            color: white;
+            font-size: 20px;
+            font-family: Microsoft YaHei;
+        }
+        .custom-title-wx{border-bottom: 1px solid cornflowerblue; width: 100%; height: 40px;}
+        .custom-button-left{position: absolute; left: 30px; width: 100px;}
+        .custom-button-right{position: absolute; left: 190px; width: 100px;}
+        .navbar-header{margin-top: 1px; text-align: center; border: 1px solid gray; background-color: gainsboro;}
+        .custom-info-device{margin-top: 16px;}
+        .custom-text-width{width: 60%;}
+        .leaflet-control-layers-selector {top: -2px;}
+        .leaflet-control-layers-group-selector{height: 20px;}
+        .leaflet-control-layers-group-name{font-size: 1.2em; color: cornflowerblue; text-align: match-parent;}
+        .leaflet-control-scale-line{text-align: center;}
+        .sweet-deal-label {
+            background-color: rgba(255, 255, 255, 0.001);
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            color: #000000;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 9999;
+        }
+        #subway{position: absolute; left: 300px;}
+        #geoContent{position: absolute; width: 450px; height: 200px; right: 100px; top: 20px;}
+    </style>
+    <script>
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    </script>
+    <script src="scripts/jquery-1.9.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/jquery.easyui.min.js"></script>
+    <script src="scripts/leaflet.js"></script>
+    <script src="scripts/heatmap.js"></script>
+    <script src="scripts/leaflet-heatmap.js"></script>
+    <script src="scripts/leaflet.draw.js"></script>
+    <script src="scripts/leaflet.markercluster-src.js"></script>
+    <script src="scripts/leaflet-search.js"></script>
+    <script src="scripts/Icon.Label.js"></script>
+    <script src="scripts/leaflet.groupedlayercontrol.js"></script>
+    <script src="scripts/L.Control.Zoomslider.js"></script>
+    <script src="scripts/Semicircle.js"></script>
+    <script src="scripts/leaflet.baidu.min.js"></script>
+    <script src="scripts/testData.js"></script>
+    <script src="scripts/selectLine.js"></script>
+    <script>
+        //地铁线
+        var subway1 = new L.featureGroup(),
+                subway2 = new L.featureGroup(),
+                subway3 = new L.featureGroup(),
+                subway4 = new L.featureGroup(),
+                subway5 = new L.featureGroup(),
+                subway6 = new L.featureGroup(),
+                subway7 = new L.featureGroup(),
+                subway8 = new L.featureGroup(),
+                subway9 = new L.featureGroup(),
+                subway10 = new L.featureGroup(),
+                subway11 = new L.featureGroup();
+        //高架桥
+        var roadNH = new L.featureGroup(),
+                roadWH = new L.featureGroup(),
+                roadZH = new L.featureGroup(),
+                roadYA = new L.featureGroup(),
+                roadNB= new L.featureGroup();
+    </script>
+</head>
+    <body>
+        <div id="map"></div>
+		<div id="infoLocation"></div>
+        <div id="subway">
+            <select id="subwaySelect">
+                <option>1号线</option>
+                <option>2号线</option>
+                <option>3号线</option>
+                <option>4号线</option>
+                <option>5号线</option>
+                <option>6号线</option>
+                <option>7号线</option>
+                <option>8号线</option>
+                <option>9号线</option>
+                <option>10号线</option>
+                <option>11号线</option>
+                <option>内环高架</option>
+                <option>中环高架</option>
+                <option>外环高架</option>
+                <option>延安路高架</option>
+                <option>南北高架</option>
+            </select>
+        </div>
+        <textarea id="geoContent"></textarea>
+        <script>
+            //地图相关定义
+            var map;
+            var switchControl;
+            var baseLayer,
+                    normalLayer,
+                    roadLayer,
+                    satelliteLayer;
+            var markersLayer = new L.featureGroup();//普通小区图层
+            var polygonLayer = new L.featureGroup();//热点区域多边形图层
+            var sectorLayer = new L.featureGroup();//扇形小区图层
+            var labelLayer = new L.featureGroup();//标注图层
+            var districtsLayer = new L.featureGroup();//框选查询及搜索查询到的小区
+            var temLayer = new L.featureGroup();//超链接点击时的单个小区图层
+            var rasterLayer = new L.featureGroup();//网格图层
+            var markerClusters = L.markerClusterGroup({chunkedLoading: true, maxClusterRadius: 100 });//MarkerClusters
+            var heatMapLayer;//热力图
+            //指标相关定义
+            var heatIndexDis = '2015-外滩';//初始化热点区域，动态改变
+            var radiusHeatMap = 0.0008;//热力图渲染半径，动态改变
+            var cacheHeatMapData = [];//缓存热力图数据
+            var lastZoomLevel = 13;//上次地图层级
+            var detailedInfoVector = [];//缓存小区数据
+            //var maxPosHeatMap = [31.94256,122.104797],//热力图渲染区域最大最小坐标
+            //        minPosHeatMap = [30.61350,120.92651];
+            //初始化函数入口
+			window.onload = initAll();
+            function initAll(){
+                initBaiduMap();
+                //getDetailedInfo();
+                //addDynamicMenu(testData);
+                //addXQ2Map(heatIndexDis);
+                //addWangGe();
+                //addMedianCycleRoad();
+                //addSubway();
+            }
+            var temSelectedLine = [];
+            var selectLineLayer = new L.featureGroup();
+            $('#subwaySelect').on('change',function(){
+                var selectName = this.value;
+                switch (selectName){
+                    case '1号线':
+                        addLineFromLocalFile('jsons/line1.json', selectLineLayer);
+                        break;
+                    case '2号线':
+                        addLineFromLocalFile('jsons/line2.json', selectLineLayer);
+                        break;
+                    case '3号线':
+                        addLineFromLocalFile('jsons/line3.json', selectLineLayer);
+                        break;
+                    case '4号线':
+                        addLineFromLocalFile('jsons/line4.json', selectLineLayer);
+                        break;
+                    case '5号线':
+                        addLineFromLocalFile('jsons/line5.json', selectLineLayer);
+                        break;
+                    case '6号线':
+                        addLineFromLocalFile('jsons/line6.json', selectLineLayer);
+                        break;
+                    case '7号线':
+                        addLineFromLocalFile('jsons/line7.json', selectLineLayer);
+                        break;
+                    case '8号线':
+                        addLineFromLocalFile('jsons/line8.json', selectLineLayer);
+                        break;
+                    case '9号线':
+                        addLineFromLocalFile('jsons/line9.json', selectLineLayer);
+                        break;
+                    case '10号线':
+                        addLineFromLocalFile('jsons/line10.json', selectLineLayer);
+                        break;
+                    case '11号线':
+                        addLineFromLocalFile('jsons/line11.json', selectLineLayer);
+                        break;
+                    case '内环高架':
+                        addLineFromLocalFile('jsons/nhgj.json', selectLineLayer);
+                        break;
+                    case '中环高架':
+                        addLineFromLocalFile('jsons/zhgj.json', selectLineLayer);
+                        break;
+                    case '外环高架':
+                        addLineFromLocalFile('jsons/whgj.json', selectLineLayer);
+                        break;
+                    case '延安路高架':
+                        addLineFromLocalFile('jsons/yagj.json', selectLineLayer);
+                        break;
+                    case '南北高架':
+                        addLineFromLocalFile('jsons/nbgj.json', selectLineLayer);
+                        break;
+                }
+            });
+            function addLineFromLocalFile(strPath,temLayer){
+                $.ajax({
+                    url: strPath,
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {}
+                })
+                        .done(function(data){
+                            selectLineLayer && (map.removeLayer(selectLineLayer), selectLineLayer.clearLayers());
+                            temSelectedLine = [];
+                            var targetArr = data.list;
+                            for(var i= 0,lenI=targetArr.length; i<lenI; ++i){
+                                var targetObj = targetArr[i];
+                                var id = targetObj.id;
+                                var pathCol = targetObj.path;
+                                //console.log(pathCol);
+                                var posCol = [];
+                                for(var j= 0,lenJ=pathCol.length; j<lenJ; ++j){
+                                    temSelectedLine.push(gcj02towgs84(pathCol[j].lng,pathCol[j].lat).reverse());
+                                    var latlng = gcj02tobd09(pathCol[j].lng,pathCol[j].lat).reverse();
+                                    addCustomMarker(latlng[0],latlng[1],temLayer);
+                                    posCol.push(latlng);
+                                }
+                                if(posCol.length <= 0) continue;
+                                var latVal = posCol[0][0],
+                                        lngVal = posCol[0][1];
+                                var popupContent = '经度:' + lngVal + '</br>纬度:' + latVal;
+                                //addCustomMarker(latVal,lngVal,temLayer);
+                                var randomNum = parseInt(Math.random()*(5-0)+0);
+                                var color = getRandomColorSubway(randomNum);
+                                //console.log(temSelectedLine);
+                                //temSelectedLine = posCol;
+                                var polyline = L.polyline(posCol, {color: color, weight: 10}).bindPopup(popupContent).addTo(temLayer);
+                            }
+                            map.addLayer(selectLineLayer);
+                        });
+            }
+            addLineFromLocalFile('jsons/line1.json', selectLineLayer);
+        </script>
+    </body>
+</html>

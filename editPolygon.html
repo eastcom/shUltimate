@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>迪斯尼保障</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="renderer" content="webkit">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="css/easyui.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/leaflet.draw.css" />
+    <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
+    <link rel="stylesheet" href="css/leaflet.markercluster.css" />
+    <link rel="stylesheet" href="css/leaflet-search.css" />
+    <link rel="stylesheet" href="css/Icon.Label.css" />
+    <link rel="stylesheet" href="css/leaflet.groupedlayercontrol.css" />
+    <!--link rel="stylesheet" href="css/L.Control.Zoomslider.css" /-->
+    <style>
+        body{ margin:0; padding:0; font-family: "Microsoft YaHei";}
+        h5{display: inline;}
+        h4{line-height: 10px;}
+        h3{margin-top: 0px; background-color: darkcyan; border: 2px solid gray;}
+        .collapse span{font-family: "Microsoft YaHei"; display: block;}
+        div a{font-family: "Microsoft YaHei"; font-size: 24px;}
+        #map{ position: absolute; top:0; bottom:0; right: 0px; left:0; }
+        #infoLocation{background-color: rgba(255,255,255,0.5); position: absolute; left: 10px;  bottom: 10px; font-size: 18px; line-height: 18px;}
+        #loading{visibility: hidden; position: absolute; background: none; top: 42%; left: 50%; width: 100px; height: 100px;}
+        #legendControl{
+            position: absolute; bottom: 0px; left: 400px; height: 50px; width: 940px; background: url("images/legend.png");
+        }
+        #allIndexShowRight{
+            position: absolute;
+            right: 80px;
+            height: 1000px;
+            width: 630px;
+            background: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: none;
+            visibility: hidden;
+            /*visibility: hidden;*/
+        }
+        #userData{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 40px;
+            border: 2px solid #252c34;
+        }
+        #dataThroughPut{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 360px;
+            border: 2px solid #252c34;
+        }
+        #hotTerminal{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 680px;
+            border: 2px solid #252c34;
+        }
+        #allIndexShowLeft{
+            position: absolute;
+            left: 80px;
+            height: 1000px;
+            width: 630px;
+            background: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: none;
+            visibility: hidden;
+            /*visibility: hidden;*/
+        }
+        #userData1{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 40px;
+            left: 80px;
+            border: 2px solid #252c34;
+            visibility: hidden;
+        }
+        #dataThroughPut1{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 360px;
+            left: 80px;
+            border: 2px solid #252c34;
+            visibility: hidden;
+        }
+        #hotTerminal1{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 680px;
+            left: 80px;
+            border: 2px solid #252c34;
+            visibility: hidden;
+        }
+        .custom-detailed-info{margin-top: 10px; text-align: center;}
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:0px;
+            background: #252c34 ;
+            outline: none;
+            color: white;
+            font-size: 20px;
+            font-family: Microsoft YaHei;
+        }
+        .custom-title-wx{border-bottom: 1px solid cornflowerblue; width: 100%; height: 40px;}
+        .custom-button-left{position: absolute; left: 30px; width: 100px;}
+        .custom-button-right{position: absolute; left: 190px; width: 100px;}
+        .navbar-header{margin-top: 1px; text-align: center; border: 1px solid gray; background-color: gainsboro;}
+        .custom-info-device{margin-top: 16px;}
+        .custom-text-width{width: 60%;}
+        .leaflet-control-layers-selector {top: -5px;}
+        .leaflet-control-layers-group-selector{height: 20px;}
+        .leaflet-control-layers-group-name{font-size: 1.2em; color: cornflowerblue; text-align: match-parent;}
+        .leaflet-control-scale-line{text-align: center; font-size: 18px; line-height: 18px;}
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip{background-color: #252c34; color: white;}
+        .leaflet-control-layers-toggle {
+            background-image: url(images/layers-2x.png);
+            width: 60px;
+            height: 60px;
+        }
+        .leaflet-control-layers-base span{font-size: 20px;}
+        .leaflet-control-layers-overlays span{font-size: 20px;}
+        .leaflet-control-search .search-button{width: 40px; height: 40px;background-image: url(images/customSearch.png);}
+        .leaflet-control-search .search-input{height: 38px;}
+        .leaflet-draw-toolbar{width: 40px; height: 40px; background-color: white}
+        .leaflet-draw-toolbar a {
+            background-image: url('images/spritesheet-2x.png');
+            background-repeat: no-repeat;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
+            background-position: -130px -10px;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-edit-edit {
+            background-position: -310px -10px;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled {
+            background-position: -430px -10px;
+        }
+        .leaflet-draw-actions-top.leaflet-draw-actions-bottom a {
+            height: 32px;
+            line-height: 32px;
+            font-size: 20px;
+            margin-top: 4px;
+            margin-left: 14px;
+        }
+        .leaflet-draw-actions-top.leaflet-draw-actions-bottom a[title="Cancel editing, discards all changes."]{margin-left: -10px;}
+        .leaflet-bar a, .leaflet-bar a:hover {
+            background-color: #fff;
+            border-bottom: 1px solid #ccc;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: black;
+        }
+        .marker-cluster div{font-size: 36px; width: 40px; height: 40px; }
+        .sweet-deal-label {
+            background-color: rgba(255, 255, 255, 0.001);
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            color: #000000;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 9999;
+        }
+        .img-preview{
+            -moz-border-bottom-colors: none;
+            -moz-border-left-colors: none;
+            -moz-border-right-colors: none;
+            -moz-border-top-colors: none;
+            border-bottom-color: #B8B8B8;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            border-bottom-style: solid;
+            border-bottom-width: 1px;
+            border-image-outset: 0 0 0 0;
+            border-image-repeat: stretch stretch;
+            border-image-slice: 100% 100% 100% 100%;
+            border-image-source: none;
+            border-image-width: 1 1 1 1;
+            border-left-color-ltr-source: physical;
+            border-left-color-rtl-source: physical;
+            border-left-color-value: #B8B8B8;
+            border-left-style-ltr-source: physical;
+            border-left-style-rtl-source: physical;
+            border-left-style-value: solid;
+            border-left-width-ltr-source: physical;
+            border-left-width-rtl-source: physical;
+            border-left-width-value: 1px;
+            border-right-color-ltr-source: physical;
+            border-right-color-rtl-source: physical;
+            border-right-color-value: #B8B8B8;
+            border-right-style-ltr-source: physical;
+            border-right-style-rtl-source: physical;
+            border-right-style-value: solid;
+            border-right-width-ltr-source: physical;
+            border-right-width-rtl-source: physical;
+            border-right-width-value: 1px;
+            border-top-color: #B8B8B8;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            border-top-style: solid;
+            border-top-width: 1px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+            float: left;
+        }
+        #geoContent{position: absolute; width: 450px; height: 200px; right: 100px; top: 10px;}
+    </style>
+    <script>
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    </script>
+    <script src="scripts/jquery-1.9.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/jquery.easyui.min.js"></script>
+    <script src="scripts/leaflet.js"></script>
+    <script src="scripts/heatmap.js"></script>
+    <script src="scripts/leaflet-heatmap.js"></script>
+    <!--script src="scripts/leaflet-heat.js"></script-->
+    <script src="scripts/leaflet.draw.js"></script>
+    <script src="scripts/leaflet.contextmenu.js"></script>
+    <script src="scripts/leaflet.markercluster-src.js"></script>
+    <script src="scripts/leaflet-search.js"></script>
+    <script src="scripts/Icon.Label.js"></script>
+    <script src="scripts/leaflet.groupedlayercontrol.js"></script>
+    <!--script src="scripts/L.Control.Zoomslider.js"></script-->
+    <script src="scripts/Semicircle.js"></script>
+    <script src="scripts/leaflet.baidu.min.js"></script>
+    <script src="scripts/testData.js"></script>
+    <script src="scripts/editPolygon.js"></script>
+    <script>
+        //地铁线
+        var subway1 = new L.featureGroup(),
+                subway2 = new L.featureGroup(),
+                subway3 = new L.featureGroup(),
+                subway4 = new L.featureGroup(),
+                subway5 = new L.featureGroup(),
+                subway6 = new L.featureGroup(),
+                subway7 = new L.featureGroup(),
+                subway8 = new L.featureGroup(),
+                subway9 = new L.featureGroup(),
+                subway10 = new L.featureGroup(),
+                subway11 = new L.featureGroup();
+        //高架桥
+        var roadNH = new L.featureGroup(),
+                roadWH = new L.featureGroup(),
+                roadZH = new L.featureGroup(),
+                roadYA = new L.featureGroup(),
+                roadNB= new L.featureGroup();
+    </script>
+</head>
+    <body>
+        <div id="map"></div>
+		<div id="infoLocation"></div>
+        <div id="loading"></div>
+        <div id="allIndexShowRight" class="img-preview">
+            <div id="userData" class="img-preview"></div>
+            <div id="dataThroughPut" class="img-preview"></div>
+            <div id="hotTerminal" class="img-preview"></div>
+        </div>
+        <!--div id="allIndexShowLeft" class="img-preview"-->
+            <div id="userData1" class="img-preview"></div>
+            <div id="dataThroughPut1" class="img-preview"></div>
+            <div id="hotTerminal1" class="img-preview"></div>
+        <!--/div-->
+        <!--<div id="createCustomWindow" class="img-preview" style="visibility: hidden; background-color: #252c34; opacity: 0.9; position: absolute; left: 100px; top: 200px; height: 340px; width: 650px; background: url('images/bigTrendPlot.png') no-repeat;">-->
+            <!--<img src="images/closePlot.png" style="position: absolute; right: 20px;" onclick="closeTrendPlot()"/>-->
+            <!--<div id="trendPlotFromChild"></div>-->
+        <!--</div>-->
+        <div id="trendPlotFromChild" style="visibility: hidden;"></div>
+        <div id="win"  style="visibility: hidden;"></div>
+        <textarea id="geoContent"></textarea>
+        <div id="legendControl" ></div>
+        <script>
+            //地图相关定义
+            var map;
+            var switchControl;
+            var baseLayer,
+                    normalLayer,
+                    roadLayer,
+                    satelliteLayer;
+            var markersLayer = new L.featureGroup();//普通小区图层
+            var polygonLayer = new L.featureGroup();//热点区域多边形图层
+            var sectorLayer = new L.featureGroup();//扇形小区图层
+            var labelLayer = new L.featureGroup();//标注图层
+            var districtsLayer = new L.featureGroup();//框选查询及搜索查询到的小区
+            var temLayer = new L.featureGroup();//超链接点击时的单个小区图层
+            var rasterLayer = new L.featureGroup();//网格图层
+            var markerClusters = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 50, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var markerClusters2G = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 100, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var markerClusters3G = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 100, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var markerClusters4G = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 100, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var pianquLayer = new L.featureGroup();//50个片区图层
+            var markersLayer2G = new L.featureGroup();//普通小区图层
+            var markersLayer3G = new L.featureGroup();//普通小区图层
+            var markersLayer4G = new L.featureGroup();//普通小区图层
+            var heatMapLayer;//热力图
+            //指标相关定义
+            var heatIndexDis = '迪士尼';//初始化热点区域，动态改变
+            var radiusHeatMap = 0.003;//热力图渲染半径，动态改变
+            var cacheHeatMapData = [];//缓存热力图数据
+            var lastZoomLevel = 13;//上次地图层级
+            var detailedInfoVector = [];//缓存小区数据
+            //var maxPosHeatMap = [31.94256,122.104797],//热力图渲染区域最大最小坐标
+            //        minPosHeatMap = [30.61350,120.92651];
+            var heatFlag = false; //控制热力图是否选中
+            //初始化函数入口
+			window.onload = initAll();
+            function initAll(){
+                initBaiduMap();
+                //getDetailedInfo();
+                //addDynamicMenu(testData);
+                //addXQ2Map(heatIndexDis,heatFlag);
+                //addWangGe();
+                addAllDis();
+                //addMedianCycleRoad();
+                //addSubway();
+                //addPosNBGJ('南北高架',heatFlag);
+                //showAllIndexInfo(heatIndexDis);
+            }
+
+//            setTimeout(function(){
+//                getParasToSetStyle('red',['迪士尼6#宏站HL1H_6','浦迪城堡HL1H_133']);//设置扇形小区颜色
+//                getParasToOpenPopup(31.138911,121.666265,'6387:8337','浦迪停车ND1_1','迪士尼', '4G','宏站');//打开小区tip
+//                getParasToOpenLL('99332:4','南北高架');//打开小区流量趋势图
+//                getParasToOpenTotalYHS('99332:4','南北高架');//打开小区用户数趋势图
+//            },1000*5);
+            function submitToDB(){
+                var updateArr = [{"hot_id":"20160519142944","lac":"6387","ci":"9025","lat":31.144652,"lon":121.677053},{"hot_id":"20160519142944","lac":"6387","ci":"9122","lat":31.144618,"lon":121.684606},{"hot_id":"20160519142944","lac":"6387","ci":"9123","lat":31.144954,"lon":121.684898},{"hot_id":"20160519142944","lac":"6387","ci":"9137","lat":31.143996,"lon":121.684428},{"hot_id":"20160519142944","lac":"6387","ci":"9138","lat":31.144938,"lon":121.684348},{"hot_id":"20160519142944","lac":"6387","ci":"9139","lat":31.14473,"lon":121.685244},{"hot_id":"20160519142944","lac":"29451","ci":"129","lat":31.145255,"lon":121.684177},{"hot_id":"20160519142944","lac":"29451","ci":"130","lat":31.144332,"lon":121.685003},{"hot_id":"20160519142944","lac":"29451","ci":"131","lat":31.145479,"lon":121.684761},{"hot_id":"20160519142944","lac":"29451","ci":"132","lat":31.144123,"lon":121.685006},{"hot_id":"20160519142944","lac":"29451","ci":"133","lat":31.144598,"lon":121.685601},{"hot_id":"20160519142944","lac":"29451","ci":"134","lat":31.144312,"lon":121.68552},{"hot_id":"20160519143341","lac":"6387","ci":"11265","lat":31.155747,"lon":121.670181},{"hot_id":"20160519143341","lac":"6387","ci":"11281","lat":31.155284,"lon":121.668933},{"hot_id":"20160519143341","lac":"6387","ci":"11297","lat":31.155732,"lon":121.669472},{"hot_id":"20160519143341","lac":"6387","ci":"11313","lat":31.156195,"lon":121.669368},{"hot_id":"20160519143341","lac":"6387","ci":"11329","lat":31.15674,"lon":121.669548},{"hot_id":"20160519143341","lac":"6387","ci":"11345","lat":31.156574,"lon":121.667271},{"hot_id":"20160519143341","lac":"6387","ci":"11617","lat":31.157709,"lon":121.666929},{"hot_id":"20160519143341","lac":"6387","ci":"10721","lat":31.159849,"lon":121.670684},{"hot_id":"20160519143341","lac":"6387","ci":"10817","lat":31.158675,"lon":121.673739},{"hot_id":"20160519143341","lac":"6387","ci":"10673","lat":31.155523,"lon":121.667343},{"hot_id":"20160519143341","lac":"6387","ci":"10753","lat":31.159509,"lon":121.668007},{"hot_id":"20160519143341","lac":"6387","ci":"10769","lat":31.158366,"lon":121.667361},{"hot_id":"20160519143341","lac":"6387","ci":"10801","lat":31.160004,"lon":121.669535},{"hot_id":"20160519143341","lac":"6387","ci":"10802","lat":31.158806,"lon":121.669022},{"hot_id":"20160519143341","lac":"6387","ci":"10833","lat":31.15455,"lon":121.671852},{"hot_id":"20160519143341","lac":"6387","ci":"10849","lat":31.160089,"lon":121.673236},{"hot_id":"20160519143341","lac":"6387","ci":"10865","lat":31.159347,"lon":121.672903},{"hot_id":"20160519143341","lac":"6387","ci":"10866","lat":31.157192,"lon":121.6739},{"hot_id":"20160519143341","lac":"6387","ci":"10867","lat":31.158552,"lon":121.668636},{"hot_id":"20160519143341","lac":"6387","ci":"10881","lat":31.158992,"lon":121.66843},{"hot_id":"20160519143341","lac":"6387","ci":"10897","lat":31.159502,"lon":121.669256},{"hot_id":"20160519143341","lac":"6387","ci":"10913","lat":31.159649,"lon":121.672014},{"hot_id":"20160519143341","lac":"6387","ci":"10929","lat":31.160437,"lon":121.670756},{"hot_id":"20160519143341","lac":"6387","ci":"10945","lat":31.160467,"lon":121.672355},{"hot_id":"20160519143341","lac":"6387","ci":"10961","lat":31.160197,"lon":121.670451},{"hot_id":"20160519143341","lac":"6387","ci":"10977","lat":31.154472,"lon":121.670505},{"hot_id":"20160519143341","lac":"6387","ci":"10993","lat":31.154843,"lon":121.668223},{"hot_id":"20160519143341","lac":"6387","ci":"11025","lat":31.155948,"lon":121.667801},{"hot_id":"20160519143341","lac":"6387","ci":"11041","lat":31.156435,"lon":121.667711},{"hot_id":"20160519143341","lac":"6387","ci":"11073","lat":31.157037,"lon":121.667783},{"hot_id":"20160519143341","lac":"6387","ci":"11377","lat":31.158737,"lon":121.672176},{"hot_id":"20160519143341","lac":"6387","ci":"11393","lat":31.154611,"lon":121.669337},{"hot_id":"20160519143341","lac":"6387","ci":"11473","lat":31.155701,"lon":121.673191},{"hot_id":"20160519143341","lac":"6387","ci":"11633","lat":31.155013,"lon":121.67205},{"hot_id":"20160519143208","lac":"6387","ci":"10658","lat":31.140843,"lon":121.668205},{"hot_id":"20160519143208","lac":"6387","ci":"10659","lat":31.14092,"lon":121.670379},{"hot_id":"20160519143208","lac":"6387","ci":"10660","lat":31.141832,"lon":121.669588},{"hot_id":"20160519143208","lac":"6387","ci":"8337","lat":31.138309,"lon":121.667271},{"hot_id":"20160519143208","lac":"6387","ci":"8338","lat":31.13871,"lon":121.667181},{"hot_id":"20160519143208","lac":"6387","ci":"8339","lat":31.138077,"lon":121.667648},{"hot_id":"20160519143328","lac":"6387","ci":"60993","lat":31.145863,"lon":121.657369},{"hot_id":"20160519143328","lac":"6387","ci":"60994","lat":31.145991,"lon":121.657048},{"hot_id":"20160519143328","lac":"6387","ci":"60995","lat":31.14624,"lon":121.657506},{"hot_id":"20160519143328","lac":"6387","ci":"61009","lat":31.14607,"lon":121.656967},{"hot_id":"20160519143328","lac":"6387","ci":"61010","lat":31.146244,"lon":121.657318},{"hot_id":"20160519143328","lac":"6387","ci":"61011","lat":31.145962,"lon":121.657502},{"hot_id":"20160519143328","lac":"43048","ci":"38257","lat":31.145912,"lon":121.656745},{"hot_id":"20160519143328","lac":"43048","ci":"38258","lat":31.146178,"lon":121.656978},{"hot_id":"20160519143328","lac":"43048","ci":"38259","lat":31.146368,"lon":121.65719},{"hot_id":"20160519143328","lac":"110696","ci":"1","lat":31.146028,"lon":121.656734},{"hot_id":"20160519143328","lac":"110696","ci":"2","lat":31.146198,"lon":121.658081},{"hot_id":"20160519143328","lac":"110696","ci":"3","lat":31.146586,"lon":121.6571},{"hot_id":"20160519143328","lac":"110696","ci":"4","lat":31.146234,"lon":121.656907},{"hot_id":"20160519143328","lac":"110696","ci":"5","lat":31.14642,"lon":121.657511},{"hot_id":"20160519143328","lac":"110696","ci":"6","lat":31.146368,"lon":121.657888},{"hot_id":"20160519142932","lac":"6387","ci":"9026","lat":31.154828,"lon":121.676865},{"hot_id":"20160519142932","lac":"6387","ci":"9027","lat":31.155098,"lon":121.677494},{"hot_id":"20160519142932","lac":"6387","ci":"9041","lat":31.154604,"lon":121.676308},{"hot_id":"20160519142932","lac":"6387","ci":"9042","lat":31.154364,"lon":121.676514},{"hot_id":"20160519142932","lac":"6387","ci":"9043","lat":31.154882,"lon":121.676416},{"hot_id":"20160519142932","lac":"29448","ci":"129","lat":31.153993,"lon":121.676416},{"hot_id":"20160519142932","lac":"29448","ci":"130","lat":31.154627,"lon":121.677655},{"hot_id":"20160519142932","lac":"29448","ci":"131","lat":31.154256,"lon":121.678015},{"hot_id":"20160519142932","lac":"29448","ci":"132","lat":31.153924,"lon":121.677116},{"hot_id":"20160519142932","lac":"29448","ci":"133","lat":31.153854,"lon":121.677395},{"hot_id":"20160519142932","lac":"29448","ci":"134","lat":31.154372,"lon":121.677062},{"hot_id":"20160519143028","lac":"6387","ci":"12259","lat":31.144536,"lon":121.662698},{"hot_id":"20160519143028","lac":"6387","ci":"12258","lat":31.144111,"lon":121.663417},{"hot_id":"20160519143028","lac":"6387","ci":"12257","lat":31.144366,"lon":121.662537},{"hot_id":"20160519143049","lac":"6387","ci":"8321","lat":31.15652,"lon":121.6724},{"hot_id":"20160519143049","lac":"6387","ci":"8322","lat":31.157547,"lon":121.671475},{"hot_id":"20160519143049","lac":"6387","ci":"8323","lat":31.159849,"lon":121.6679},{"hot_id":"20160519143049","lac":"6387","ci":"8305","lat":31.158922,"lon":121.667684},{"hot_id":"20160519143049","lac":"6387","ci":"8306","lat":31.158528,"lon":121.672409},{"hot_id":"20160519143049","lac":"6387","ci":"8307","lat":31.157246,"lon":121.670343},{"hot_id":"20160519143049","lac":"6387","ci":"11153","lat":31.155199,"lon":121.673056},{"hot_id":"20160519143049","lac":"6387","ci":"11265","lat":31.154642,"lon":121.671214},{"hot_id":"20160519143049","lac":"6387","ci":"11281","lat":31.156342,"lon":121.67381},{"hot_id":"20160519143049","lac":"6387","ci":"11297","lat":31.155137,"lon":121.670253},{"hot_id":"20160519143049","lac":"6387","ci":"11313","lat":31.155454,"lon":121.672122},{"hot_id":"20160519143049","lac":"6387","ci":"11329","lat":31.156856,"lon":121.67147},{"hot_id":"20160519143049","lac":"6387","ci":"11345","lat":31.155399,"lon":121.668241},{"hot_id":"20160519143049","lac":"6387","ci":"11617","lat":31.15509,"lon":121.671421},{"hot_id":"20160519143049","lac":"6387","ci":"10721","lat":31.155689,"lon":121.668681},{"hot_id":"20160519143049","lac":"6387","ci":"10817","lat":31.156126,"lon":121.668421},{"hot_id":"20160519143049","lac":"6387","ci":"10673","lat":31.158057,"lon":121.674062},{"hot_id":"20160519143049","lac":"6387","ci":"10753","lat":31.158273,"lon":121.673047},{"hot_id":"20160519143049","lac":"6387","ci":"10769","lat":31.156759,"lon":121.673703},{"hot_id":"20160519143049","lac":"6387","ci":"10801","lat":31.157547,"lon":121.669975},{"hot_id":"20160519143049","lac":"6387","ci":"10802","lat":31.157586,"lon":121.673721},{"hot_id":"20160519143049","lac":"6387","ci":"10833","lat":31.158374,"lon":121.672481},{"hot_id":"20160519143049","lac":"6387","ci":"10849","lat":31.157771,"lon":121.668295},{"hot_id":"20160519143049","lac":"6387","ci":"10865","lat":31.157539,"lon":121.671969},{"hot_id":"20160519143049","lac":"6387","ci":"10866","lat":31.159687,"lon":121.67311},{"hot_id":"20160519143049","lac":"6387","ci":"10867","lat":31.160027,"lon":121.672014},{"hot_id":"20160519143049","lac":"6387","ci":"10881","lat":31.159479,"lon":121.670586},{"hot_id":"20160519143049","lac":"6387","ci":"10897","lat":31.159123,"lon":121.670702},{"hot_id":"20160519143049","lac":"6387","ci":"10913","lat":31.158976,"lon":121.672903},{"hot_id":"20160519143049","lac":"6387","ci":"10929","lat":31.15866,"lon":121.671825},{"hot_id":"20160519143049","lac":"6387","ci":"10945","lat":31.159069,"lon":121.669526},{"hot_id":"20160519143049","lac":"6387","ci":"10961","lat":31.158343,"lon":121.669328},{"hot_id":"20160519143049","lac":"6387","ci":"10977","lat":31.159363,"lon":121.67178},{"hot_id":"20160519143049","lac":"6387","ci":"10993","lat":31.158173,"lon":121.671385},{"hot_id":"20160519143049","lac":"6387","ci":"11025","lat":31.158683,"lon":121.670648},{"hot_id":"20160519143049","lac":"6387","ci":"11041","lat":31.157192,"lon":121.668573},{"hot_id":"20160519143049","lac":"6387","ci":"11073","lat":31.156612,"lon":121.668654},{"hot_id":"20160519143049","lac":"6387","ci":"11377","lat":31.157918,"lon":121.669103},{"hot_id":"20160519143049","lac":"6387","ci":"11393","lat":31.157308,"lon":121.669561},{"hot_id":"20160519143049","lac":"6387","ci":"11473","lat":31.157887,"lon":121.670163},{"hot_id":"20160519143049","lac":"6387","ci":"11633","lat":31.158335,"lon":121.670469},{"hot_id":"20160519143049","lac":"43048","ci":"41153","lat":31.156891,"lon":121.670446},{"hot_id":"20160519143049","lac":"43048","ci":"41154","lat":31.157176,"lon":121.672086},{"hot_id":"20160519143049","lac":"43048","ci":"41155","lat":31.157686,"lon":121.672211},{"hot_id":"20160519143049","lac":"103087","ci":"1","lat":31.156103,"lon":121.671116},{"hot_id":"20160519143049","lac":"103087","ci":"2","lat":31.156079,"lon":121.672589},{"hot_id":"20160519143049","lac":"103087","ci":"3","lat":31.156894,"lon":121.671542},{"hot_id":"20160519143049","lac":"103087","ci":"4","lat":31.156195,"lon":121.670136},{"hot_id":"20160519143049","lac":"103087","ci":"5","lat":31.155801,"lon":121.67187},{"hot_id":"20160519143049","lac":"103087","ci":"6","lat":31.156265,"lon":121.671142},{"hot_id":"20160519143058","lac":"6387","ci":"8977","lat":31.151652,"lon":121.68662},{"hot_id":"20160519143058","lac":"6387","ci":"8978","lat":31.151073,"lon":121.687007},{"hot_id":"20160519143058","lac":"6387","ci":"8979","lat":31.152077,"lon":121.686962},{"hot_id":"20160519143058","lac":"6387","ci":"8961","lat":31.152185,"lon":121.68671},{"hot_id":"20160519143058","lac":"6387","ci":"8962","lat":31.152,"lon":121.685776},{"hot_id":"20160519143058","lac":"6387","ci":"8963","lat":31.152332,"lon":121.686369},{"hot_id":"20160519143058","lac":"29446","ci":"129","lat":31.151784,"lon":121.686027},{"hot_id":"20160519143058","lac":"29446","ci":"130","lat":31.151421,"lon":121.686953},{"hot_id":"20160519143058","lac":"29446","ci":"131","lat":31.151884,"lon":121.686162},{"hot_id":"20160519143058","lac":"29446","ci":"132","lat":31.151436,"lon":121.685911},{"hot_id":"20160519143058","lac":"29446","ci":"133","lat":31.151544,"lon":121.686126},{"hot_id":"20160519143058","lac":"29446","ci":"134","lat":31.151243,"lon":121.68645},{"hot_id":"20160519144204","lac":"28951","ci":"129","lat":31.150254,"lon":121.665537},{"hot_id":"20160519144204","lac":"28951","ci":"130","lat":31.149844,"lon":121.665366},{"hot_id":"20160519144204","lac":"28951","ci":"131","lat":31.149798,"lon":121.665842},{"hot_id":"20160519144204","lac":"28951","ci":"132","lat":31.150277,"lon":121.66613},{"hot_id":"20160519144204","lac":"28951","ci":"133","lat":31.149802,"lon":121.665232},{"hot_id":"20160519144204","lac":"28951","ci":"134","lat":31.150478,"lon":121.66472},{"hot_id":"20160519144204","lac":"28951","ci":"135","lat":31.150733,"lon":121.665627},{"hot_id":"20160519144204","lac":"28951","ci":"136","lat":31.1503,"lon":121.665726},{"hot_id":"20160519143235","lac":"6387","ci":"50115","lat":31.141716,"lon":121.675095},{"hot_id":"20160519143235","lac":"6387","ci":"50114","lat":31.141639,"lon":121.675643},{"hot_id":"20160519143235","lac":"6387","ci":"50113","lat":31.141508,"lon":121.674305},{"hot_id":"20160519143235","lac":"6387","ci":"50099","lat":31.141778,"lon":121.674403},{"hot_id":"20160519143235","lac":"6387","ci":"50098","lat":31.142404,"lon":121.675571},{"hot_id":"20160519143235","lac":"6387","ci":"50097","lat":31.141963,"lon":121.674331},{"hot_id":"20160519143235","lac":"103067","ci":"11","lat":31.14116,"lon":121.674134},{"hot_id":"20160519143235","lac":"103067","ci":"12","lat":31.1415,"lon":121.675895},{"hot_id":"20160519143235","lac":"103067","ci":"13","lat":31.142404,"lon":121.674215},{"hot_id":"20160519143235","lac":"106712","ci":"4","lat":31.141121,"lon":121.675059},{"hot_id":"20160519143235","lac":"106712","ci":"5","lat":31.141353,"lon":121.675158},{"hot_id":"20160519143235","lac":"106712","ci":"6","lat":31.141044,"lon":121.675544},{"hot_id":"20160519143235","lac":"106712","ci":"1","lat":31.141863,"lon":121.673703},{"hot_id":"20160519143235","lac":"106712","ci":"2","lat":31.142435,"lon":121.674933},{"hot_id":"20160519143235","lac":"106712","ci":"3","lat":31.14218,"lon":121.675904},{"hot_id":"20160519143254","lac":"6387","ci":"8993","lat":31.148261,"lon":121.679048},{"hot_id":"20160519143254","lac":"6387","ci":"8994","lat":31.148562,"lon":121.679191},{"hot_id":"20160519143254","lac":"6387","ci":"8995","lat":31.148786,"lon":121.678068},{"hot_id":"20160519143254","lac":"6387","ci":"9009","lat":31.148469,"lon":121.678446},{"hot_id":"20160519143254","lac":"6387","ci":"9010","lat":31.147743,"lon":121.679182},{"hot_id":"20160519143254","lac":"6387","ci":"9011","lat":31.148276,"lon":121.679569},{"hot_id":"20160519143254","lac":"29447","ci":"129","lat":31.148353,"lon":121.677997},{"hot_id":"20160519143254","lac":"29447","ci":"130","lat":31.147078,"lon":121.678077},{"hot_id":"20160519143254","lac":"29447","ci":"131","lat":31.14874,"lon":121.678607},{"hot_id":"20160519143254","lac":"29447","ci":"132","lat":31.147867,"lon":121.678068},{"hot_id":"20160519143254","lac":"29447","ci":"133","lat":31.147774,"lon":121.678715},{"hot_id":"20160519143254","lac":"29447","ci":"134","lat":31.147102,"lon":121.679164},{"hot_id":"20160519143037","lac":"6387","ci":"60993","lat":31.145954,"lon":121.656886},{"hot_id":"20160519143037","lac":"6387","ci":"60994","lat":31.145974,"lon":121.657264},{"hot_id":"20160519143037","lac":"6387","ci":"60995","lat":31.145686,"lon":121.656691},{"hot_id":"20160519143037","lac":"6387","ci":"61009","lat":31.145827,"lon":121.657089},{"hot_id":"20160519143037","lac":"6387","ci":"61010","lat":31.145802,"lon":121.657627},{"hot_id":"20160519143037","lac":"43048","ci":"38257","lat":31.145802,"lon":121.657627},{"hot_id":"20160519143037","lac":"43048","ci":"38257","lat":31.145802,"lon":121.657627},{"hot_id":"20160519143037","lac":"43048","ci":"38258","lat":31.146039,"lon":121.657888},{"hot_id":"20160519143037","lac":"43048","ci":"38259","lat":31.145865,"lon":121.658063},{"hot_id":"20160519143037","lac":"110696","ci":"1","lat":31.145605,"lon":121.657055},{"hot_id":"20160519143037","lac":"110696","ci":"2","lat":31.146653,"lon":121.657681},{"hot_id":"20160519143037","lac":"110696","ci":"3","lat":31.145848,"lon":121.657852},{"hot_id":"20160519143037","lac":"110696","ci":"4","lat":31.146464,"lon":121.657057},{"hot_id":"20160519143037","lac":"110696","ci":"5","lat":31.146203,"lon":121.657652},{"hot_id":"20160519143037","lac":"110696","ci":"6","lat":31.145668,"lon":121.657122},{"hot_id":"20160519143126","lac":"6387","ci":"9171","lat":31.139684,"lon":121.678679},{"hot_id":"20160519143126","lac":"6387","ci":"9170","lat":31.13973,"lon":121.679317},{"hot_id":"20160519143126","lac":"6387","ci":"9169","lat":31.139869,"lon":121.678491},{"hot_id":"20160519143126","lac":"6387","ci":"9155","lat":31.140333,"lon":121.679955},{"hot_id":"20160519143126","lac":"6387","ci":"9154","lat":31.138896,"lon":121.678756},{"hot_id":"20160519143126","lac":"6387","ci":"9153","lat":31.140372,"lon":121.679092},{"hot_id":"20160519143126","lac":"29452","ci":"129","lat":31.139545,"lon":121.677961},{"hot_id":"20160519143126","lac":"29452","ci":"130","lat":31.139437,"lon":121.680332},{"hot_id":"20160519143126","lac":"29452","ci":"131","lat":31.140441,"lon":121.679218},{"hot_id":"20160519143126","lac":"29452","ci":"132","lat":31.138927,"lon":121.678571},{"hot_id":"20160519143126","lac":"29452","ci":"133","lat":31.139591,"lon":121.679766},{"hot_id":"20160519143126","lac":"29452","ci":"134","lat":31.139058,"lon":121.679407},{"hot_id":"20160519142626","lac":"6387","ci":"8465","lat":31.146530761311528,"lon":121.6671141557325},{"hot_id":"20160519142626","lac":"6387","ci":"8466","lat":31.146043,"lon":121.66684},{"hot_id":"20160519142626","lac":"6387","ci":"8467","lat":31.14714,"lon":121.667509},{"hot_id":"20160519142626","lac":"6387","ci":"8481","lat":31.146236,"lon":121.667918},{"hot_id":"20160519142626","lac":"6387","ci":"8482","lat":31.146035,"lon":121.667334},{"hot_id":"20160519142626","lac":"6387","ci":"8483","lat":31.146986,"lon":121.666328},{"hot_id":"20160519142626","lac":"43048","ci":"41233","lat":31.145572,"lon":121.670828},{"hot_id":"20160519142626","lac":"43048","ci":"41234","lat":31.145294,"lon":121.669409},{"hot_id":"20160519142626","lac":"43048","ci":"41235","lat":31.146267,"lon":121.670056},{"hot_id":"20160519142626","lac":"28952","ci":"129","lat":31.146754,"lon":121.668178},{"hot_id":"20160519142626","lac":"28952","ci":"130","lat":31.147109,"lon":121.666831},{"hot_id":"20160519142626","lac":"28952","ci":"131","lat":31.147457,"lon":121.667001},{"hot_id":"20160519142626","lac":"28952","ci":"132","lat":31.147318,"lon":121.668025},{"hot_id":"20160519142626","lac":"28952","ci":"133","lat":31.1467,"lon":121.666696},{"hot_id":"20160519142626","lac":"28952","ci":"134","lat":31.146889,"lon":121.667715},{"hot_id":"20160519143309","lac":"6387","ci":"9058","lat":31.157825,"lon":121.678554},{"hot_id":"20160519143309","lac":"6387","ci":"9059","lat":31.157964,"lon":121.680108},{"hot_id":"20160519143309","lac":"6387","ci":"9073","lat":31.156821,"lon":121.678122},{"hot_id":"20160519143309","lac":"6387","ci":"9074","lat":31.156976,"lon":121.679901},{"hot_id":"20160519143309","lac":"6387","ci":"9075","lat":31.158497,"lon":121.679425},{"hot_id":"20160519143309","lac":"29449","ci":"129","lat":31.156442,"lon":121.678329},{"hot_id":"20160519143309","lac":"29449","ci":"130","lat":31.158011,"lon":121.679533},{"hot_id":"20160519143309","lac":"29449","ci":"131","lat":31.157547,"lon":121.67947},{"hot_id":"20160519143309","lac":"29449","ci":"132","lat":31.15781,"lon":121.679101},{"hot_id":"20160519143309","lac":"29449","ci":"133","lat":31.157045,"lon":121.678015},{"hot_id":"20160519143309","lac":"29449","ci":"134","lat":31.157377,"lon":121.67885},{"hot_id":"20160519143042","lac":"6387","ci":"8353","lat":31.138355,"lon":121.660264},{"hot_id":"20160519143042","lac":"6387","ci":"8354","lat":31.138749,"lon":121.660345},{"hot_id":"20160519143042","lac":"6387","ci":"8355","lat":31.138092,"lon":121.660596},{"hot_id":"20160519143042","lac":"43048","ci":"41249","lat":31.137768,"lon":121.660542},{"hot_id":"20160519143042","lac":"43048","ci":"41250","lat":31.13854,"lon":121.660983},{"hot_id":"20160519143042","lac":"43048","ci":"41251","lat":31.137969,"lon":121.66109},{"hot_id":"20160519143042","lac":"114979","ci":"1","lat":31.137659,"lon":121.659797},{"hot_id":"20160519143042","lac":"114979","ci":"2","lat":31.139305,"lon":121.660974},{"hot_id":"20160519143042","lac":"114979","ci":"3","lat":31.138394,"lon":121.661594},{"hot_id":"20160519143042","lac":"114979","ci":"4","lat":31.139089,"lon":121.659932},{"hot_id":"20160519143042","lac":"114979","ci":"5","lat":31.138927,"lon":121.661576},{"hot_id":"20160519143042","lac":"114979","ci":"6","lat":31.137536,"lon":121.660677}];
+                console.log(updateArr);
+                var resultObj = {
+                    "dbId": "srpt",
+                    "tableName": "dm_re_ba_rel_hot_cell",
+                    "type": "update",
+                    "conditions": ["hot_id","lac","ci"],
+                    "datas": updateArr
+                };
+                $.ajax({
+                    url: 'http://' + baseUrl + ':8080/services/ws/fast_update/common', //后台处理程序
+                    type:'post',         //数据发送方式
+                    dataType:'json',     //接受数据格式
+                    contentType: "application/json",
+                    accessType: "application/json",
+                    data: JSON.stringify(resultObj),         //要传递的数据
+                    beforeSend: function(XMLHttpRequest){
+                        document.getElementById('loading').style.visibility = 'visible';
+                        $('#loading').html("<img src='images/loading.gif' />");
+                    },
+                    complete: function(XMLHttpRequest,textStatus){
+                        document.getElementById('loading').style.visibility = 'hidden';
+                        $('#loading').empty();
+                    },
+                    success: function(data){
+                        alert('保存成功!');
+                    },
+                    error: function(e){
+                        alert('保存失败!');
+                    }
+                });
+            }
+            //submitToDB();
+            
+            function addImageOverlay(){
+                var imageUrl = 'http://www.lib.utexas.edu/maps/historical/newark_nj_1922.jpg';
+                var southWest = L.latLng(31.079115, 121.5702),
+                        northEast = L.latLng(31.237952, 121.753598),
+                        imageBounds = L.latLngBounds(southWest, northEast);
+                L.imageOverlay(imageUrl, imageBounds).addTo(map);
+            }
+            //addImageOverlay();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>  
+        body{font-family: Microsoft YaHei;}        
+        table{
+            text-align: center; border-spacing: 0px;
+        } 
+        .b_small{
+            font-size: 20px; color: white;
+        }
+        .b_normal{
+            font-size: 26px; color: white;
+        }
+        .b_big{
+            font-size: 40px; color: white;
+        }        
+        .div_small{
+            font-size: 18px; color: white;
+        }
+        .div_normal{
+            font-size: 24px; color: white;
+        }
+        .div_big{
+            font-size: 36px; color: white;
+        }
+        .td_small{
+            font-size: 18px; color: white; line-height: 22px;
+        }
+        .td_normal{
+            font-size: 28px; color: white; line-height: 30px;
+        }
+        .td_big{
+            font-size: 40px; color: white; line-height: 38px;
+        }
+        .tr_small{
+            font-size: 20px; line-height: 24px; color: #00fcff;
+        }
+        .tr_normal{
+            font-size: 28px; line-height: 40px; color: #00fcff;
+        }
+        .tr_big{
+            font-size: 42px; line-height: 50px; color: #00fcff;
+        }
+        .table_small{
+            position: absolute; width: 90%; top: 18%; text-align: center;
+        }
+        .table_normal{
+            position: absolute; width: 100%; top: 12%; text-align: center;
+        }
+        .table_big{
+            position: absolute; width: 100%; top: 18%; text-align: center;
+        }
+    </style>
+    <script src="../scripts/jquery-1.9.1.min.js"></script>
+    <script src="../echarts/build/dist/echarts.js"></script>
+</head>
+<body>
+    <script>
+        //基本URL
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+        var hostName = window.location.hostname;
+        hostName != '' && (baseUrl = hostName); 
+        //基本端口号
+        var basePort = '8080';
+        var locationPort = window.location.port;                
+        locationPort != '' && (basePort = locationPort);
+        //ECharts路径配置
+        require.config({
+            paths: {
+                echarts: '../echarts/build/dist'
+            }
+        });    
+        function date2str(x,y) {
+            var z = {M:x.getMonth()+1,d:x.getDate(),h:x.getHours(),m:x.getMinutes(),s:x.getSeconds()};
+            y = y.replace(/(M+|d+|h+|m+|s+)/g,function(v) {return ((v.length>1?"0":"")+eval('z.'+v.slice(-1))).slice(-2)});
+            return y.replace(/(y+)/g,function(v) {return x.getFullYear().toString().slice(-v.length)});
+        }
+        //获得当前时间倒推n分钟
+        function getCurrentTimeMin(n){
+            var timeBegin = new Date();
+            //timeBegin.setHours(timeBegin.getHours()-1);
+            timeBegin.setMinutes(timeBegin.getMinutes()-n);
+            var result = date2str(timeBegin,"yyyy-MM-dd hh:mm:ss");
+            return result;
+            //var timeBeginStr = timeBegin.format("yyyy-MM-dd hh:mm:ss");
+        }
+        //获得当前时间倒推n小时
+        function getCurrentTimeHour(n){
+            var timeBegin = new Date();
+            timeBegin.setHours(timeBegin.getHours()-n);
+            //timeBegin.setMinutes(timeBegin.getMinutes()-15);
+            var result = date2str(timeBegin,"yyyy-MM-dd hh:mm:ss");
+            return result;
+            //var timeBeginStr = timeBegin.format("yyyy-MM-dd hh:mm:ss");
+        }
+        //获取小类图标
+        function getAppIconPath(appName){
+            var iconName="";
+            switch(appName){
+                case "新浪微博":
+                    iconName="001.png";
+                    break;
+                case "腾讯视频":
+                    iconName="002.png";
+                    break;
+                case "Chrome浏览器":
+                    iconName="003.png";
+                    break;
+                case "大众点评":
+                    iconName="004.png";
+                    break;
+                case "同花顺":
+                    iconName="005.png";
+                    break;
+                case "大智慧":
+                    iconName="006.png";
+                    break;
+                case "QQ":
+                    iconName="007.png";
+                    break;
+                case "京东":
+                    iconName="008.png";
+                    break;
+                case "墨迹天气":
+                    iconName="009.png";
+                    break;
+                case "飞信":
+                    iconName="010.png";
+                    break;
+                case "QQ浏览器":
+                    iconName="011.png";
+                    break;
+                case "百度地图":
+                    iconName="012.png";
+                    break;
+                case "淘宝":
+                    iconName="013.png";
+                    break;
+                case "微信":
+                    iconName="014.png";
+                    break;
+                case "支付宝":
+                    iconName="015.png";
+                    break;
+                case "SAFARI浏览器":
+                    iconName="016.png";
+                    break;
+                case "移动掌上营业厅":
+                    iconName="017.png";
+                    break;
+                //      case "UC浏览器":
+                case "UC网站访问":
+                    iconName="018.png";
+                    break;
+                case "QQ音乐":
+                    iconName="019.png";
+                    break;
+                case "阿基米德":
+                    iconName="020.png";
+                    break;
+                case "奇艺影音":
+                    iconName="021.png";
+                    break;
+                case "嘀嘀打车":
+                    iconName="022.png";
+                    break;
+                case "澎湃新闻":
+                    iconName="023.png";
+                    break;
+                case "AppStore":
+                    iconName="024.png";
+                    break;
+                case "腾讯新闻":
+                    iconName="025.png";
+                    break;
+                case "56视频":
+                    iconName="026.png";
+                    break;
+                case "91助手":
+                    iconName="027.png";
+                    break;
+                case "163网盘":
+                    iconName="028.png";
+                    break;
+                case "360手机助手":
+                    iconName="029.png";
+                    break;
+                case "AOL AIM":
+                    iconName="030.png";
+                    break;
+                case "CNTV":
+                    iconName="031.png";
+                    break;
+                case "HO米":
+                    iconName="032.png";
+                    break;
+                case "ICQ":
+                    iconName="033.png";
+                    break;
+                case "IKu":
+                    iconName="034.png";
+                    break;
+                case "Jego":
+                    iconName="035.png";
+                    break;
+                case "Mobile Market":
+                    iconName="036.png";
+                    break;
+                case "NetChat":
+                    iconName="037.png";
+                    break;
+                case "PP助手":
+                    iconName="038.png";
+                    break;
+                case "QQLive":
+                    iconName="039.png";
+                    break;
+                case "QQ空间":
+                    iconName="040.png";
+                    break;
+                case "QQ应用宝":
+                    iconName="041.png";
+                    break;
+                case "SAMSUNG应用商店":
+                    iconName="042.png";
+                    break;
+                case "WhatsApp":
+                    iconName="043.png";
+                    break;
+                case "ZOL应用中心":
+                    iconName="044.png";
+                    break;
+                case "安智市场":
+                    iconName="045.png";
+                    break;
+                case "安卓市场":
+                    iconName="046.png";
+                    break;
+                case "百度":
+                    iconName="047.png";
+                    break;
+                case "百度Hi":
+                    iconName="048.png";
+                    break;
+                case "百度电视剧":
+                    iconName="049.png";
+                    break;
+                case "百度手机浏览器":
+                    iconName="050.png";
+                    break;
+                case "百度搜索":
+                    iconName="051.png";
+                    break;
+                case "电影网":
+                    iconName="052.png";
+                    break;
+                case "东方财富网":
+                    iconName="053.png";
+                    break;
+                case "都秀":
+                    iconName="054.png";
+                    break;
+                case "番茄社区":
+                    iconName="055.png";
+                    break;
+                case "凤凰网":
+                    iconName="056.png";
+                    break;
+                case "好豆菜谱":
+                    iconName="057.png";
+                    break;
+                case "汇天地手机应用商店":
+                    iconName="058.png";
+                    break;
+                case "金鹰网":
+                    iconName="059.png";
+                    break;
+                case "酷6网":
+                    iconName="060.png";
+                    break;
+                case "乐视网":
+                    iconName="061.png";
+                    break;
+                case "联通掌上视频":
+                    iconName="062.png";
+                    break;
+                case "芒果TV":
+                    iconName="063.png";
+                    break;
+                case "米聊":
+                    iconName="064.png";
+                    break;
+                case "陌陌":
+                    iconName="065.png";
+                    break;
+                case "啪啪":
+                    iconName="066.png";
+                    break;
+                case "苹果云服务":
+                    iconName="067.png";
+                    break;
+                case "人人桌面":
+                    iconName="068.png";
+                    break;
+                case "手机电视Dopool":
+                    iconName="069.png";
+                    break;
+                case "搜狐视频":
+                    iconName="070.png";
+                    break;
+                case "搜狐网":
+                    iconName="071.png";
+                    break;
+                case "苏宁应用商店":
+                    iconName="072.png";
+                    break;
+                case "天翼Live":
+                    iconName="073.png";
+                    break;
+                case "同步推":
+                    iconName="074.png";
+                    break;
+                case "土豆网":
+                    iconName="075.png";
+                    break;
+                case "豌豆荚":
+                    iconName="076.png";
+                    break;
+                case "网易网":
+                    iconName="077.png";
+                    break;
+                case "网易新闻":
+                    iconName="078.png";
+                    break;
+                case "沃商店":
+                    iconName="079.png";
+                    break;
+                case "小米应用商店":
+                    iconName="080.png";
+                    break;
+                case "携程旅行":
+                    iconName="081.png";
+                    break;
+                case "新浪视频":
+                    iconName="082.png";
+                    break;
+                case "新浪网":
+                    iconName="083.png";
+                    break;
+                case "星光时代会员客户端":
+                    iconName="084.png";
+                    break;
+                case "雅虎通":
+                    iconName="085.png";
+                    break;
+                case "和视频":
+                    iconName="086.png";
+                    break;
+                case "应用帮":
+                    iconName="087.png";
+                    break;
+                case "优度直播":
+                    iconName="088.png";
+                    break;
+                case "优酷网":
+                    iconName="089.png";
+                    break;
+                case "有你短信":
+                    iconName="090.png";
+                    break;
+                case "智汇云":
+                    iconName="091.png";
+                    break;
+                case "MSN":
+                    iconName="092.png";
+                    break;
+                case "阿里旺旺":
+                    iconName="093.png";
+                    break;
+                case "天猫":
+                    iconName="094.png";
+                    break;
+                case "微信抢红包":
+                    iconName="095.png";
+                    break;
+                case "360影视大全":
+                    iconName="096.png";
+                    break;
+                case "金鹰网（jinying）":
+                    iconName="097.png";
+                    break;
+                default:
+                    iconName="000.png";
+                    break;
+            }
+
+            return iconName;
+        }
+        //字符格式输出
+        function formatNumber(num,cent,isThousand){
+            num = num.toString().replace(/\$|\,/g,'');
+            if(isNaN(num))//检查传入数值为数值类型.
+                num = "0";
+            if(isNaN(cent))//确保传入小数位为数值型数值.
+                cent = 0;
+            cent = parseInt(cent);
+            cent = Math.abs(cent);//求出小数位数,确保为正整数.
+            if(isNaN(isThousand))//确保传入是否需要千分位为数值类型.
+                isThousand = 0;
+            isThousand = parseInt(isThousand);
+            if(isThousand < 0)
+                isThousand = 0;
+            if(isThousand >=1) //确保传入的数值只为0或1
+                isThousand = 1;
+            sign = (num == (num = Math.abs(num)));//获取符号(正/负数)
+            //Math.floor:返回小于等于其数值参数的最大整数
+            num = Math.floor(num*Math.pow(10,cent)+0.50000000001);//把指定的小数位先转换成整数.多余的小数位四舍五入.
+            cents = num%Math.pow(10,cent); //求出小数位数值.
+            num = Math.floor(num/Math.pow(10,cent)).toString();//求出整数位数值.
+            cents = cents.toString();//把小数位转换成字符串,以便求小数位长度.
+            while(cents.length<cent){//补足小数位到指定的位数.
+                cents = "0" + cents;
+            }
+            if(isThousand == 0) //不需要千分位符.
+                return (((sign)?'':'-') + num + '.' + cents);
+            //对整数部分进行千分位格式化.
+            for (var i = 0; i < Math.floor((num.length-(1+i))/3); i++)
+                num = num.substring(0,num.length-(4*i+3))+','+
+                num.substring(num.length-(4*i+3));
+            return (((sign)?'':'-') + num + '.' + cents);
+        }
+        //解析URL参数
+        function getUrlParam(sUrl, sKey) {
+            sUrl = sUrl.split('?')[1];//截取地址之后的所有参数
+            //sUrl = sUrl.replace(/[&#]/g,'');//删除所有特殊字符
+            //console.log(sUrl)
+            if(sKey !== ''){
+                //console.log('不为空')
+                //构造正则，并截取最新的sUrl
+                var para = '(' + sKey + '=' + ')';
+                var myReg1 = new RegExp(para,'g');
+                //var myReg2 = /[A-Za-z0-9]+/g;//可以修改传中文或者数字参数
+                var myReg2 = /^([\u4E00-\u9FA5]+，?)+$/g;
+                var myReg = new RegExp(myReg1.source + myReg2.source,'g');
+                //console.log(myReg)
+                var temArray = sUrl.match(myReg);//得到的是含有参数分隔符的数组,如果只需要返回参数，则还需进行下面的转换
+                //console.log(temArray)
+                if(temArray){
+                    temArray = temArray.toString().replace(myReg1,'');//删除参数分隔符sKey=,得到的是字符串
+                    var result = temArray.split(',');//字符串转换为数组
+                    return result;
+                }
+                else{
+                    //console.log(sKey)
+                    return '';//传入的参数名称sKey有错或者参数名值为空
+                }
+            }
+            if(sKey === ''){
+                //console.log('为空')
+                sUrl = sUrl.split(/[&#]/g);//以特殊字符为分隔符生成数组
+                var resultObj = {};//最后需要返回的对象
+                for(var i= 0, len = sUrl.length; i<len; ++i){
+                    var temValue = sUrl[i];
+                    var temArrayV = temValue.split('=');
+                    resultObj[temArrayV[0]] = temArrayV[1];
+                }
+                return resultObj;
+            }
+        }    
+        //变量定义,真实调用
+        var nameVal = getUrlParam(locationUrl,'');
+        var disName = decodeURIComponent(nameVal.name);
+        var parentId = nameVal.parentId;
+        var divWidth = nameVal.width,
+            divHeight = nameVal.height,
+            isBig = nameVal.isBig,//值为small,normal,big,设置不同字体样式
+            businessName = decodeURIComponent(nameVal.businessName),
+            pcVersion = nameVal.pcVersion,
+            imgName= nameVal.imgName;        
+        //变量定义,测试用
+        //记录父页面div的ID,关闭、最大化等单击时操作该父页面的div
+        // var parentId = 'useCount';
+        // var divWidth = 600,
+        //     divHeight = 200,
+        //     isBig = true,
+        //     businessName = '用户数',
+        //     disName = '迪士尼',
+        //     imgName= 'indexBackGroundBig';
+        var timeBegin = getCurrentTimeHour(1),
+                timeEnd = getCurrentTimeMin(10);
+        var yesBegin = getCurrentTimeHour(25),
+                yesEnd = getCurrentTimeMin(1445);
+        var ajaxUrl = {
+            '流量': {
+                field: '总流量',
+                base: 1024*1024,
+                url: 'http://' + baseUrl + ':' + basePort + '/stream/union/hotspot-times-compare?hotspot=' + encodeURIComponent(disName) + '&timeBegin=' + timeBegin + '&timeEnd=' + timeEnd + '&timeBeginCompare=' + yesBegin + '&timeEndCompare=' + yesEnd
+            },
+            '用户数': {
+                field: '总用户数',
+                base: 10000,
+                url: 'http://' + baseUrl + ':' + basePort + '/stream/union/hotspot-times-compare?hotspot=' + encodeURIComponent(disName) + '&timeBegin=' + timeBegin + '&timeEnd=' + timeEnd + '&timeBeginCompare=' + yesBegin + '&timeEndCompare=' + yesEnd
+            },
+            '热门应用': {
+                url: 'http://' + baseUrl + ':' + basePort + '/stream/union/apps/hotspot-time-rank?time=' + timeEnd + '&hotspot=' + encodeURIComponent(disName)
+            },
+            '热门场馆': {
+                url: 'http://' + baseUrl + ':' + basePort + '/services/ws/fast_query/area/ipmsdm/cfg-hotConfigQueryContent'
+            }
+        };
+        //根据业务请求服务
+        var indexInfo = ajaxUrl[businessName];    
+        //dom准备
+        createDiv(divWidth,divHeight,imgName);
+        //标题栏
+        createTable(businessName,divWidth);
+        //工具栏
+        createTools();    
+        //请求数据入口 
+        //businessName ==='热门应用' || (createCurValue(divWidth),callServer(indexInfo));
+        businessName ==='热门应用' && (callServerRMYY(indexInfo));  
+        businessName ==='热门场馆' && (callServerRMCG(indexInfo));
+        if(businessName !== '热门应用' && businessName!== '热门场馆'){
+            createCurValue(divWidth);
+            callServer(indexInfo);
+        }   
+        //当前值
+        function createCurValue(width){
+            var customDiv = $('<div></div>');
+            customDiv.attr('id','curVal');
+            customDiv.addClass('div_' + isBig);
+            customDiv.css('color','#00f859');
+            customDiv.css({
+                position: 'absolute', width: '300px', top: divHeight/5, left: width/2
+            });
+            customDiv.appendTo($('#infoAll'));
+        }    
+        //大屏小屏公用
+        function createDiv(width,height,image){
+            //创建大div
+            var $customDiv = $('<div></div>');
+            $customDiv.attr('id','infoAll');
+            $customDiv.addClass('div_' + isBig);
+            $customDiv.css({
+                position: 'absolute', width: width, height: height, 'background-image': 'url(../images/' + image + '.png)', 'background-repeat': 'no-repeat'
+            });        
+            //创建echarts容器div
+            var ecDiv = $('<div></div>');
+            ecDiv.attr('id','echartDiv');
+            ecDiv.css({
+                position: 'absolute', width: width, height: height-20
+            });
+            ecDiv.appendTo($customDiv);
+            //创建loading
+            var loadingDiv = $('<div></div>');
+            loadingDiv.attr('id','loading');
+            loadingDiv.css({
+                position: 'absolute', top: '45%', left: '50%'
+            });
+            loadingDiv.appendTo($customDiv);
+            //最后添加到页面
+            $customDiv.appendTo('body');
+        }    
+        function createTable(name,width){
+            var customDiv = $('<div></div>');
+            customDiv.attr('id','title');
+            customDiv.addClass('div_' + isBig);
+            customDiv.css({
+                position: 'absolute', width: '100%', top: 0, left: 0
+            });
+            customDiv.appendTo($('#infoAll'));
+            var customTable = $("<table border=\"0\" style='width: 70%; margin-left: 6%; text-align: center;'></table>");        
+            var tr = $('<tr></tr>');
+            tr.appendTo(customTable);
+            var imgUrl = 'images/icon6.png';
+            //图片
+            var td = $('<td></td>');
+            // td.css({
+            //     position: 'absolute', left: '30px'
+            // });
+            td.html('<img src=' + imgUrl + ' style="width: 32px; height: 32px;" />');        
+            //td.attr('id','icon')
+            //createImage('title','images/icon6.png',name,'530px','5px','32px','32px');
+            td.appendTo(tr);         
+            //标题
+            var td = $('<td></td>');   
+            //td.addClass('td_' + isBig);     
+            // td.css({
+            //     position: 'absolute', left: '62px'
+            // });
+            td.html('<b id="disTitle" class="' + "b_" + isBig + '">' + disName + " "  + name + '</b>');
+            td.appendTo(tr);               
+            //时间
+            //var marginPos = width * 0.1 - 30;
+            var td = $('<td></td>'); 
+            //td.addClass('td_' + isBig);  
+            // td.css({
+            //     position: 'absolute', 'right': marginPos
+            // });      
+            td.html('<b id="disTime" class="' + "b_" + isBig + '">13:20</b>');
+            td.appendTo(tr);
+            customTable.appendTo(customDiv);             
+        }
+        //创建工具栏
+        function createTools(){
+            createImage('infoAll','trendPlots/images/closePlot.png','关闭','50px','12px','16px','16px','pointer',closeTrendPlotParent);
+            isBig === 'big' || createImage('infoAll','trendPlots/images/maxim.png','最大化','70px','12px','16px','16px','pointer',maxTrendPlotParent);
+            isBig === 'big' && createImage('infoAll','trendPlots/images/returnNormal.png','还原','90px','12px','16px','16px','pointer',normalTrendPlotParent);
+        }
+        function createImage(parentId,src,title,rightPos,top,width,height,cursorPointer,fn){
+            var customImg = $('<img/>');
+            customImg.attr({'src': src, 'title': title});
+            customImg.css({
+                position: 'absolute', right: rightPos, top: top, width: width, height: height, 'z-index': 99, cursor: cursorPointer
+            });
+            $('#' + parentId).append(customImg);        
+            if(fn){
+                customImg.on('click',function(){
+                    fn();
+                });
+            }        
+        }    
+        //开始请求数据
+        function callServer(obj){
+            $.ajax({
+                url: obj.url,
+                type: 'get',
+                dataType: 'json',
+                data: {},
+                beforeSend: function(XMLHttpRequest){
+                    document.getElementById('loading').style.visibility = 'visible';
+                    $('#loading').html("<img src='../images/loader1.gif' />");
+                },
+                complete: function(XMLHttpRequest,textStatus){
+                    document.getElementById('loading').style.visibility = 'hidden';
+                    $('#loading').empty();
+                }
+            })
+                .done(function(data){                
+                    var objectData = data;
+                    var lengthData = objectData.length;
+                    var array2G =[];
+                    var array3G =[];
+                    var array4G =[];
+                    var arrayAll = [];
+                    var yesArrayAll = [];
+                    var timeData =[];
+                    var field = obj.field;
+                    var history = field + '历史比';                
+                    var base = obj.base;
+                    for (var i=0; i<lengthData;i++){                    
+                        var temAll = objectData[i][field];
+                        arrayAll.push((temAll/base).toFixed(2));
+                        var scale =1;
+                        if(objectData[i][history]){
+                           scale = objectData[i][history];
+                        }
+                        yesArrayAll.push((temAll/scale/base).toFixed(2));
+                        var time = objectData[i].time.substring(11,16);
+                        timeData.push(time);
+                    }
+                    drawPlots(arrayAll,yesArrayAll,timeData,field);                
+                });
+        }
+        function callServerRMYY(obj){
+            $.ajax({
+                url: obj.url,
+                type: 'get',
+                dataType: 'json',
+                data: {},
+                beforeSend: function(XMLHttpRequest){
+                    document.getElementById('loading').style.visibility = 'visible';
+                    $('#loading').html("<img src='../images/loader1.gif' />");
+                },
+                complete: function(XMLHttpRequest,textStatus){
+                    document.getElementById('loading').style.visibility = 'hidden';
+                    $('#loading').empty();
+                }
+            })
+                .done(function(data){
+                    var customTable = $("<table border=\"0\"></table>");
+                    customTable.addClass('table_' + isBig);
+                    //添加表头
+                    var tr = $('<tr></tr>');
+                    tr.appendTo(customTable);
+                    tr.addClass('tr_' + isBig);                               
+                    tr.append('<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>');
+                    tr.append('<td>用户数(人)</td>');
+                    tr.append('<td>流量(MB)</td>');
+                    for(var i=0,lenI=data.length; i<5; ++i){
+                        var users = data[i]['总用户数'],
+                            flows = formatNumber(data[i]['总流量']/1024,2,1),
+                            appIcon = getAppIconPath(data[i].element);
+                        var tr = $('<tr></tr>');
+                        tr.appendTo(customTable);                                               
+                        //图标
+                        var td = $('<td></td>');                        
+                        isBig === 'small' && td.html('<img src=\"app-icon/'+appIcon+'" style="width: 18px; height: 18px; margin-left: 16px;" onclick="detailedInformation(\''+disName+'\',\''+data[i].minor+'\',\''+data[i].major+'\')" title = "' + data[i].element + '"/>');
+                        isBig === 'normal' && td.html('<img src=\"app-icon/'+appIcon+'" style="width: 28px; height: 28px; margin-left: 12px;" onclick="detailedInformation(\''+disName+'\',\''+data[i].minor+'\',\''+data[i].major+'\')" title = "' + data[i].element + '"/>');
+                        isBig === 'big' && td.html('<img src=\"app-icon/'+appIcon+'" style="width: 36px; height: 36px; margin-left: 12px;" onclick="detailedInformation(\''+disName+'\',\''+data[i].minor+'\',\''+data[i].major+'\')" title = "' + data[i].element + '"/>');                        
+                        td.appendTo(tr);
+                        //用户数
+                        var td = $('<td></td>');
+                        td.addClass('td_' + isBig);
+                        td.html(users);
+                        td.appendTo(tr);
+                        //流量
+                        var td = $('<td></td>');
+                        td.addClass('td_' + isBig);
+                        td.html(flows);
+                        td.appendTo(tr);
+                    }
+                    customTable.appendTo($('#echartDiv'));
+                    $('#disTime').html(data[0].time.substring(11,16));
+                });
+        }
+        function callServerRMCG(obj){
+            disName === '迪士尼' || (getName());
+            disName === '迪士尼' && (getAllName('核心区域'),document.getElementById('disTitle').innerHTML = '核心区域' + '  热门场馆' );        
+            function getName(){
+                $.ajax({
+                    url: obj.url,
+                    type: 'get',
+                    dataType: 'json',
+                    data: {},
+                    beforeSend: function(XMLHttpRequest){
+                        document.getElementById('loading').style.visibility = 'visible';
+                        $('#loading').html("<img src='../images/loader1.gif' />");
+                    },
+                    complete: function(XMLHttpRequest,textStatus){
+                        document.getElementById('loading').style.visibility = 'hidden';
+                        $('#loading').empty();
+                    }
+                })
+                    .done(function(data){
+                        var targetObj = data[0];
+                        var content = JSON.parse(targetObj.content);
+                        var hotName = content.hotCellInName;
+                        if(hotName == '' || hotName == ' ') hotName = disName;
+                        
+                        //console.log(hotName);
+                        getAllName(hotName); 
+                        var pos = hotName.indexOf('-');
+                        var titleName = hotName.substring(pos+1);
+                        document.getElementById('disTitle').innerHTML = decodeURIComponent(titleName) + '  热门场馆';         
+                    });
+            }  
+            function getAllName(hotName){
+                $.ajax({
+                    url: 'http://'+ baseUrl + ':'+basePort+'/services/ws/fast_query/area/re/re_areaHotRel?hotspot=' + encodeURIComponent(hotName) + '&hot_type=1',
+                    type: 'get'
+                })
+                    .done(function(data){
+                        //console.log(data);
+                        var nameArr = [];
+                        for(var i=0,lenI=data.length; i<lenI; ++i){
+                            var targetObj = data[i];
+                            var name = targetObj.hot_name;
+                            nameArr.push(name);
+                        }
+                        getTopN(nameArr);
+                    });
+            }
+            function getTopN(arr){
+                var time = getCurrentTimeMin(10);
+                //console.log(arr);
+                $.ajax({
+                    url: 'http://'+ baseUrl + ':'+basePort+'/stream/union/hotspots-time-rank?time=' + time + '&sortKey=' + encodeURIComponent('总用户数') + '&num=5&order=desc',
+                    type: 'post',
+                    contentType: 'application/json',
+                    data: JSON.stringify(arr)
+                    
+                })
+                    .done(function(data){
+                        var customTable = $("<table border=\"0\"></table>");
+                        customTable.addClass('table_' + isBig);
+                        //添加表头
+                        var tr = $('<tr></tr>');
+                        tr.appendTo(customTable);
+                        tr.addClass('tr_' + isBig); 
+                        tr.append('<td>场馆名称</td>');
+                        tr.append('<td>用户数(人)</td>');
+                        tr.append('<td>流量(MB)</td>');
+                        for(var i=0,lenI=data.length; i<lenI; ++i){
+                            var users = data[i]['总用户数'],
+                                flows = formatNumber(data[i]['总流量']/1024,2,1);
+                            var stadiumName = data[i]['hotspot'];
+                            var tr = $('<tr></tr>');                            
+                            tr.appendTo(customTable);                            
+                            //名称
+                            var td = $('<td></td>');
+                            //td.html('<a  href="javascript:void(0)" title='+ stadiumName + '><div style="margin-left: 10px; overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:160px;">' + stadiumName + '</div></a>');
+                            td.html(stadiumName);
+                            td.appendTo(tr);
+                            //用户数
+                            var td = $('<td></td>');
+                            td.addClass('td_' + isBig);
+                            td.html(users);
+                            td.appendTo(tr);
+                            //流量
+                            var td = $('<td></td>');
+                            td.addClass('td_' + isBig);
+                            td.html(flows);
+                            td.appendTo(tr);
+                        }
+                        customTable.appendTo($('#echartDiv'));                    
+                        $('#disTime').html(data[0].time.substring(11,16));
+                    })
+            }              
+        }
+        //热门应用撰取
+        function detailedInformation(str,index,major){
+            window.parent.callDrawTrendPlot("pagesDSN/informyy.html?name="+encodeURIComponent(str)+"&major="+encodeURIComponent(major)+"&index="+encodeURIComponent(index));
+            //window.open ("informyy.html?name="+encodeURIComponent(str) + "&index=" + encodeURIComponent(index) + "&major=" + encodeURIComponent(major), '_blank', 'height=330, width=1130, top=200,left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=no, status=no');
+        }
+        //开始echarts绘图
+        function drawPlots(arrayAll,yesArrayAll,timeData,field){
+            var titleName = '';
+            var unit = '';
+            var lengthData = arrayAll.length;
+            field === '总流量' && (titleName = field + '(GB)', unit = ' GB');
+            field === '总用户数' && (titleName = field + '(万)', unit = ' 万');
+            isBig === 'small' && (nameFont = 14);
+            isBig === 'small' || (nameFont = 20);
+            require(
+                    [
+                        'echarts',
+                        'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                    ],
+                    function (ec) {
+                        // 基于准备好的dom，初始化echarts图表
+                        var myChart = ec.init(document.getElementById('echartDiv'));
+
+                        var option = {
+                            title : {
+                                x: 'center',
+                                textStyle: {
+                                    fontSize: 30,
+                                    color: '#ffffff'
+                                }
+                                //text: str + ' 用户数'
+                            },
+                            axis: {
+                                splitNumber: 3,
+                                axisLabel: {
+                                    textStyle: {
+                                        color: '#ffffff'
+                                    }
+                                }
+                            },
+                            tooltip : {
+                                trigger: 'axis'
+                            },
+                            legend: {
+                                data: ['昨日','今日'/*,'3G用户','2G用户'*/],
+                                textStyle: {
+                                    fontSize: 24,
+                                    color: '#ffffff'
+                                },
+                                y: 'bottom',
+                                x: 'center'
+                            },
+                            calculable : true,
+                            grid: {
+                                x: '10%',
+                                width: '78%',
+                                borderWidth: 0
+                                //backgroundColor: '#252c34'
+                            },
+                            xAxis : [
+                                {
+                                    type: 'category',
+                                    axisLabel: {
+                                        textStyle: {
+                                            fontSize: 20,
+                                            color: '#ffffff'
+                                        }
+                                    },
+                                    boundaryGap: false,
+                                    name: '',
+                                    splitLine: {
+                                        show: true,
+                                        lineStyle: {
+                                            color: ['#003250'],
+                                            width: 1,
+                                            type: 'solid'
+                                        }
+                                    },
+                                    data : timeData
+                                }
+                            ],
+                            yAxis : [
+                                {
+                                    type : 'value',
+                                    splitNumber: 1,
+                                    axisLabel: {
+                                        textStyle: {
+                                            fontSize: 20,
+                                            color: '#ffffff'
+                                        }
+                                    },
+                                    nameTextStyle: {
+                                        fontSize: nameFont,
+                                        color: '#00fcff'
+                                    },
+                                    name: titleName,
+                                    splitLine: {
+                                        show: true,
+                                        lineStyle: {
+                                            color: ['#003250'],
+                                            width: 1,
+                                            type: 'solid'
+                                        }
+                                    }
+                                }
+                            ],
+                            series : [
+                                {
+                                    itemStyle:{
+                                        normal: {color:'#fff000', lineStyle: {width: 2}}
+                                    },
+                                    name: '昨日',
+                                    type: 'line',
+                                    data: yesArrayAll
+                                },
+                                {
+                                    itemStyle:{
+                                        normal: {color:'#00f859  ', lineStyle: {width: 2}}
+                                    },
+                                    name: '今日',
+                                    type: 'line',
+                                    data: arrayAll
+                                }/*,
+                                 {
+                                 itemStyle:{
+                                 normal: {color:'#00f859  '}
+                                 },
+                                 name: '3G用户',
+                                 type: 'line',
+                                 data: array3G
+                                 },
+                                 {
+                                 itemStyle:{
+                                 normal: {color:'#fff000'}
+                                 },
+                                 name: '2G用户',
+                                 type: 'line',
+                                 data: array2G
+                                 }*/
+                            ]
+                        };
+                        // 为echarts对象加载数据,并添加单击响应事件
+                        myChart.setOption(option,true);
+                    }
+            );
+            $('#disTime').html(timeData[lengthData-1]);
+            $('#curVal').html( '当前值：' + arrayAll[lengthData-1] + unit );
+        }      
+        function closeTrendPlotParent(){
+            window.parent.closeDivFromChild(parentId);
+            //console.log('关闭');
+        }
+        function maxTrendPlotParent(){
+            var src = "pagesDSN/commonLL.html?name=" + disName + "&parentId=" + parentId + "&width=860" + "&height=460" + "&isBig=big" + "&imgName=maxBig" + "&businessName=" + encodeURIComponent(businessName) + "&pcVersion=" + pcVersion;    
+            window.parent.callDivMaxFromChild(src,parentId);
+            //console.log('最大化',src);
+        }
+        function normalTrendPlotParent(){            
+            var backImg = '';
+            var version = '';
+            var width = 0,
+                height = 0;
+            if(pcVersion == 'false'){
+                version = 'normal';
+                if(businessName === '用户数' || businessName ==='流量'){
+                    backImg = 'fourCharts';
+                    width = 600;
+                    height = 200;                    
+                }else{
+                    backImg = 'indexBackGroundBig';
+                    width = 600;
+                    height = 400;
+                }                
+                var src = "pagesDSN/commonLL.html?name=" + disName + "&parentId=" + parentId + "&width=" + width + "&height=" + height + "&isBig=" + version + "&imgName=" + backImg + "&businessName=" + encodeURIComponent(businessName) + "&pcVersion=false";    
+                window.parent.callDivNormalFromChild(src,parentId,disName);
+            }else{
+                version = 'small';
+                backImg = 'indexBackGroundBigSmall';
+                width = 400;
+                height = 200;
+                var src = "pagesDSN/commonLL.html?name=" + disName + "&parentId=" + parentId + "&width=" + width + "&height=" + height + "&isBig=" + version + "&imgName=" + backImg + "&businessName=" + encodeURIComponent(businessName) + "&pcVersion=true";    
+                window.parent.callDivSmallFromChild(src,parentId,disName);
+            }            
+            //console.log('还原');
+        }
+    </script>
+</body>
+</html>

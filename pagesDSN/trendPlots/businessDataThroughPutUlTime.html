@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        #popupContent{
+            overflow: hidden;
+            border:1px solid #CCC;
+            background-color:#F9F9F9;
+            border:1px solid #333;
+            padding:5px;
+            width:1100px;
+            height:300px;
+        }
+    </style>
+</head>
+<body>
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<!-- 添加各种趋势图 -->
+<div id="popupContent"></div>
+<div id="divWhoise" style="border:none; position: absolute;left:500px;top:90px;height: 200px;">
+    <input type="image" src="../images/loading.gif"  width="124px" height="124px" align="middle" /><p>数据加载中，请稍后...</p>
+</div>
+<!-- ECharts单文件引入 -->
+<script src="jquery-1.9.1/jquery-1.9.1.js"></script>
+<script src="echarts/build/dist/echarts.js"></script>
+<script type="text/javascript">
+    // ECharts路径配置
+    require.config({
+        paths: {
+            echarts: 'echarts/build/dist'
+        }
+    });
+    var baseUrl = "10.221.247.7";
+    var s=  window.location.href;
+    if(s.indexOf('10.10.46.60') != -1){
+        baseUrl = '10.10.46.60';
+    }
+    //解决跨域请求数据问题
+    jQuery.support.cors = true;
+    jQuery.ajaxSetup({ scriptCharset: "utf-8" , contentType: "application/json; charset=utf-8"});
+    //判断对象是否为空
+    function isEmpty(obj)
+    {
+        for (var name in obj)
+        {
+            return false;
+        }
+        return true;
+    }
+    function callTrendPlot(str){
+        $.getJSON("http://"+baseUrl+":8080/stream/ue/hotspot-majors?hotspot="+encodeURIComponent(str),function(data){
+            $('#divWhoise').show();
+            var objectData = data;
+            var lengthData=objectData.length;
+            //alert(lengthData);
+            var array2G =[];
+            var array3G =[];
+            var array4G =[];
+            var timeData =[];
+            for (var i=0; i<lengthData;i++){
+                var dataThroughPut4GUl= 0,
+                        dataThroughPut4GDl = 0,
+                        dataThroughPut3GUl = 0,
+                        dataThroughPut3GDl = 0,
+                        dataThroughPut2GUl = 0,
+                        dataThroughPut2GDl = 0,
+                        dataThroughPut2G = 0,
+                        dataThroughPut3G = 0,
+                        dataThroughPut4G = 0;
+                for (var name in objectData[i]['4G']) {
+                    if (name == infoName) {
+                        if (objectData[i]['4G'][name] != null){
+                            dataThroughPut4GUl = objectData[i]['4G'][name].ul_bytes / 1024 / 1024;//记录4G流量,单位是MB
+                            dataThroughPut4GDl = objectData[i]['4G'][name].dl_bytes / 1024 / 1024;
+                            dataThroughPut4G = dataThroughPut4GUl + dataThroughPut4GDl;
+                        }
+                        if (objectData[i]['3G'][name] != null) {
+                            dataThroughPut3GUl = objectData[i]['3G'][name].ul_bytes / 1024 / 1024;//记录4G流量,单位是MB
+                            dataThroughPut3GDl = objectData[i]['3G'][name].dl_bytes / 1024 / 1024;
+                            dataThroughPut3G = dataThroughPut3GUl + dataThroughPut3GDl;
+                        }
+                        if (objectData[i]['2G'][name] != null) {
+                            dataThroughPut2GUl = objectData[i]['2G'][name].ul_bytes / 1024 / 1024;//记录4G流量,单位是MB
+                            dataThroughPut2GDl = objectData[i]['2G'][name].dl_bytes / 1024 / 1024;
+                            dataThroughPut2G = dataThroughPut2GUl + dataThroughPut2GDl;
+                        }
+                        continue;
+                    }
+                }
+                array2G.push(parseInt(dataThroughPut2GUl*100)/100);
+                array3G.push(parseInt(dataThroughPut3GUl*100)/100);
+                array4G.push(parseInt(dataThroughPut4GUl*100)/100);
+                //alert(array4G[i]);
+                var time = objectData[i].time.substring(11,16);
+                timeData.push(time);
+            }
+
+            require(
+                    [
+                        'echarts',
+                        'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                    ],
+                    function (ec) {
+                        // 基于准备好的dom，初始化echarts图表
+                        var myChart = ec.init(document.getElementById('popupContent'));
+
+                        option = {
+                            title : {
+                                text: strIndexName +infoName+ "上行流量历史趋势图"
+                            },
+                            tooltip : {
+                                trigger: 'axis'
+                            },
+                            legend: {
+                                data:['4G上行流量','3G上行流量','2G上行流量']
+                            },
+                            calculable : true,
+                            xAxis : [
+                                {
+                                    type : 'category',
+                                    boundaryGap : false,
+                                    name:'时间',
+                                    data : timeData
+                                }
+                            ],
+                            yAxis : [
+                                {
+                                    type : 'value',
+                                    name:'流量（MB）',
+                                    axisLabel : {
+                                        formatter: '{value}'
+                                    }
+                                }
+                            ],
+                            series : [
+                                {
+                                    name:'4G上行流量',
+                                    type:'line',
+                                    data:array4G
+                                },
+                                {
+                                    name:'3G上行流量',
+                                    type:'line',
+                                    data:array3G
+                                },
+                                {
+                                    name:'2G上行流量',
+                                    type:'line',
+                                    data:array2G
+                                }
+                            ]
+                        };
+                        // 为echarts对象加载数据,并添加单击响应事件
+                        myChart.setOption(option,true);
+                    }
+            );
+            $('#divWhoise').hide();
+        });
+    }
+    //获取页面传递过来的参数
+    //var indexName = window.location.search.split("?")[1];
+    var start = window.location.search.indexOf("?");
+    var end = window.location.search.indexOf("!");
+    var indexName = decodeURIComponent(window.location.search.substring(start+1,end),"utf-8");//记录调用页面名称
+    var infoName = decodeURIComponent(window.location.search.substring(end+1),"utf-8");//记录业务名称
+    //alert(indexName);
+    //alert(infoName);
+    var strIndexName = indexName;
+    callTrendPlot(strIndexName);
+
+</script>
+</body>

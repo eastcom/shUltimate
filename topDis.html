@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TOPN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="renderer" content="webkit">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="css/easyui.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/leaflet.draw.css" />
+    <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
+    <link rel="stylesheet" href="css/leaflet.markercluster.css" />
+    <link rel="stylesheet" href="css/leaflet-search.css" />
+    <link rel="stylesheet" href="css/Icon.Label.css" />
+    <link rel="stylesheet" href="css/leaflet.groupedlayercontrol.css" />
+    <link rel="stylesheet" href="css/style-road-guard-big.css" />
+    <!--link rel="stylesheet" href="css/L.Control.Zoomslider.css" /-->
+    <style>
+        body{ margin:0; padding:0; font-family: "Microsoft YaHei";}
+        h5{display: inline;}
+        h4{line-height: 10px;}
+        h3{margin-top: 0px; background-color: darkcyan; border: 2px solid gray;}
+        .collapse span{font-family: "Microsoft YaHei"; display: block;}
+        div a{font-family: "Microsoft YaHei"; font-size: 24px;}
+        #map{ position: absolute; top:0; bottom:0; right: 0px; left:0; }
+        /*#map{ position: absolute; top:0; bottom:0; right: 0px; left:0; width: 3200px; height: 1200px; overflow: auto;}*/
+        #infoLocation{background-color: rgba(255,255,255,0.5); position: absolute; left: 10px;  bottom: 10px; font-size: 18px; line-height: 18px;}
+        #loading{visibility: hidden; position: absolute; background: none; top: 42%; left: 50%; width: 100px; height: 100px;}
+        #allIndexShow{
+            visibility: hidden; background-color: #252c34; position: absolute; top: 0px; bottom: 0px; right: 80px; width: 620px; border: none; overflow-y: auto; overflow-x: hidden;
+        }
+
+        #userData{
+            position: absolute; top: 0px; width: 100%; height: 300px;
+        }
+        #dataThroughPut{
+            position: absolute; top: 310px; width: 100%; height: 300px;
+        }
+        #hotApp{
+            position: absolute; top: 620px; width: 100%; height: 240px;
+        }
+        #hotTerminal{
+            position: absolute; top: 870px; width: 100%; height: 300px;
+        }
+        .custom-detailed-info{margin-top: 10px; text-align: center;}
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:0px;
+            background: #252c34 ;
+            outline: none;
+            color: white;
+            font-size: 20px;
+            font-family: Microsoft YaHei;
+        }
+        .custom-title-wx{border-bottom: 1px solid cornflowerblue; width: 100%; height: 40px;}
+        .custom-button-left{position: absolute; left: 30px; width: 100px;}
+        .custom-button-right{position: absolute; left: 190px; width: 100px;}
+        .navbar-header{margin-top: 1px; text-align: center; border: 1px solid gray; background-color: gainsboro;}
+        .custom-info-device{margin-top: 16px;}
+        .custom-text-width{width: 60%;}
+        .leaflet-control-layers-selector {top: -5px;}
+        .leaflet-control-layers-group-selector{height: 20px;}
+        .leaflet-control-layers-group-name{font-size: 1.2em; color: cornflowerblue; text-align: match-parent;}
+        .leaflet-control-scale-line{text-align: center; font-size: 18px; line-height: 18px;}
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip{background-color: #252c34; color: white;}
+        .leaflet-control-layers-toggle {
+            background-image: url(images/layers-2x.png);
+            width: 60px;
+            height: 60px;
+        }
+        .leaflet-control-layers-base span{font-size: 20px;}
+        .leaflet-control-layers-overlays span{font-size: 20px;}
+        .leaflet-control-search .search-button{width: 40px; height: 40px;background-image: url(images/customSearch.png);}
+        .leaflet-control-search .search-input{height: 38px;}
+        .leaflet-draw-toolbar{width: 40px; height: 40px; background-color: white}
+        .leaflet-draw-toolbar a {
+            background-image: url('images/spritesheet-2x.png');
+            background-repeat: no-repeat;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
+            background-position: -130px -10px;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-edit-edit {
+            background-position: -310px -10px;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled {
+            background-position: -430px -10px;
+        }
+        .leaflet-draw-actions-top.leaflet-draw-actions-bottom a {
+            height: 32px;
+            line-height: 32px;
+            font-size: 20px;
+            margin-top: 4px;
+            margin-left: 14px;
+        }
+        .leaflet-draw-actions-top.leaflet-draw-actions-bottom a[title="Cancel editing, discards all changes."]{margin-left: -10px;}
+        .leaflet-bar a, .leaflet-bar a:hover {
+            background-color: #fff;
+            border-bottom: 1px solid #ccc;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: black;
+        }
+        .marker-cluster div{font-size: 36px; width: 40px; height: 40px; }
+        .sweet-deal-label {
+            background-color: rgba(255, 255, 255, 0.001);
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            color: #000000;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 9999;
+        }
+        .img-preview{
+            -moz-border-bottom-colors: none;
+            -moz-border-left-colors: none;
+            -moz-border-right-colors: none;
+            -moz-border-top-colors: none;
+            border-bottom-color: #B8B8B8;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            border-bottom-style: solid;
+            border-bottom-width: 1px;
+            border-image-outset: 0 0 0 0;
+            border-image-repeat: stretch stretch;
+            border-image-slice: 100% 100% 100% 100%;
+            border-image-source: none;
+            border-image-width: 1 1 1 1;
+            border-left-color-ltr-source: physical;
+            border-left-color-rtl-source: physical;
+            border-left-color-value: #B8B8B8;
+            border-left-style-ltr-source: physical;
+            border-left-style-rtl-source: physical;
+            border-left-style-value: solid;
+            border-left-width-ltr-source: physical;
+            border-left-width-rtl-source: physical;
+            border-left-width-value: 1px;
+            border-right-color-ltr-source: physical;
+            border-right-color-rtl-source: physical;
+            border-right-color-value: #B8B8B8;
+            border-right-style-ltr-source: physical;
+            border-right-style-rtl-source: physical;
+            border-right-style-value: solid;
+            border-right-width-ltr-source: physical;
+            border-right-width-rtl-source: physical;
+            border-right-width-value: 1px;
+            border-top-color: #B8B8B8;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            border-top-style: solid;
+            border-top-width: 1px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+            float: left;
+        }
+        .elevated_txt{cursor: pointer;}
+        .ctd1{cursor: pointer;}
+        .ttd1{
+            font-family: 'fzlantinghei-m-gbkregular';
+            width:22%;
+            font-size:21px;
+            padding-left:10px;
+            cursor: pointer;
+        }
+        .ttd1 span{
+            font-size:18px;
+            color:#1aabc8;
+        }
+
+        .ttd2{
+            font-family: 'lets_go_digitalregular';
+            width:25%;
+            font-size:32px;
+            padding-left:10px;
+        }
+        .ttd2 span{
+            font-size:18px;
+            color:#1aabc8;
+        }
+    </style>
+    <script>
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    </script>
+    <script src="scripts/jquery-1.9.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/jquery.easyui.min.js"></script>
+    <script src="scripts/leaflet.js"></script>
+    <script src="scripts/heatmap.js"></script>
+    <script src="scripts/leaflet-heatmap.js"></script>
+    <script src="scripts/leaflet.draw.js"></script>
+    <script src="scripts/leaflet.contextmenu.js"></script>
+    <script src="scripts/leaflet.markercluster-src.js"></script>
+    <script src="scripts/leaflet-search.js"></script>
+    <script src="scripts/Icon.Label.js"></script>
+    <script src="scripts/leaflet.groupedlayercontrol.js"></script>
+    <!--script src="scripts/L.Control.Zoomslider.js"></script-->
+    <script src="scripts/Semicircle.js"></script>
+    <script src="scripts/leaflet.baidu.min.js"></script>
+    <!--script src="scripts/testData.js"></script-->
+    <script src="scripts/topDis.js"></script>
+    <script>
+        //地铁线
+        var subway1 = new L.featureGroup(),
+                subway2 = new L.featureGroup(),
+                subway3 = new L.featureGroup(),
+                subway4 = new L.featureGroup(),
+                subway5 = new L.featureGroup(),
+                subway6 = new L.featureGroup(),
+                subway7 = new L.featureGroup(),
+                subway8 = new L.featureGroup(),
+                subway9 = new L.featureGroup(),
+                subway10 = new L.featureGroup(),
+                subway11 = new L.featureGroup();
+        //高架桥
+        var roadNH = new L.featureGroup(),
+                roadWH = new L.featureGroup(),
+                roadZH = new L.featureGroup(),
+                roadYA = new L.featureGroup(),
+                roadNB= new L.featureGroup();
+    </script>
+</head>
+    <body>
+        <div id="map"></div>
+		<div id="infoLocation"></div>
+        <div id="loading"></div>
+        <div id="allIndexShow" class="img-preview">
+            <div id="userData" class="img-preview"></div>
+            <div id="dataThroughPut" class="img-preview"></div>
+            <div id="hotTerminal" class="img-preview"></div>
+            <div id="hotApp" class="img-preview"></div>
+        </div>
+        <div id="trendPlotFromChild" style="visibility: hidden;"></div>
+        <div id="win"  style="visibility: hidden;"></div>
+
+        <script>
+            //地图相关定义
+            var map;
+            var switchControl;
+            var baseLayer,
+                    normalLayer,
+                    roadLayer,
+                    satelliteLayer;
+            var markersLayer = new L.featureGroup();//普通小区图层
+            var polygonLayer = new L.featureGroup();//热点区域多边形图层
+            var sectorLayer = new L.featureGroup();//扇形小区图层
+            var labelLayer = new L.featureGroup();//标注图层
+            var districtsLayer = new L.featureGroup();//框选查询及搜索查询到的小区
+            var temLayer = new L.featureGroup();//超链接点击时的单个小区图层
+            var rasterLayer = new L.featureGroup();//网格图层
+            var markerClusters = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 100, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var heatMapLayer;//热力图
+            //指标相关定义
+            var heatIndexDis = '迪士尼';//初始化热点区域，动态改变
+            var radiusHeatMap = 0.004;//热力图渲染半径，动态改变
+            var cacheHeatMapData = [];//缓存热力图数据
+            var lastZoomLevel = 13;//上次地图层级
+            var detailedInfoVector = [];//缓存小区数据
+            //var maxPosHeatMap = [31.94256,122.104797],//热力图渲染区域最大最小坐标
+            //        minPosHeatMap = [30.61350,120.92651];
+            var heatFlag = true; //控制热力图是否选中
+            //初始化函数入口
+			window.onload = initAll();
+            function initAll(){
+                initBaiduMap();
+                addTopDis();
+            }
+            function addTopDis(){
+                var time = getCurrentTimeMin(15);
+                var renderIndex = '总用户数';
+                var cellNameUrl = 'http://' + baseUrl + ':8080/stream/rank/sites-allidrs-time?time=' + time + '&num=1000&sortKey=' + encodeURIComponent(renderIndex) + '&order=desc';
+                $.ajax({
+                    type : "get",
+                    async : true, //异步执行
+                    url : cellNameUrl,
+                    data : {},
+                    beforeSend: function(XMLHttpRequest){
+                        document.getElementById('loading').style.visibility = 'visible';
+                        $('#loading').html("<img src='images/loading.gif' />");
+                    },
+                    complete: function(XMLHttpRequest,textStatus){
+                        document.getElementById('loading').style.visibility = 'hidden';
+                        $('#loading').empty();
+                    },
+                    dataType : "json" //返回数据形式为json
+                })
+                        .done(function (data) {
+                            //console.log(data);
+                            var heatMapData = [];
+                            for(var i= 0,lenI=data.length; i<lenI; ++i){
+                                var targetObj = data[i];
+                                var userVal = targetObj[renderIndex];
+                                var lat = parseFloat(targetObj.latitude),
+                                        lng = parseFloat(targetObj.longitude);
+                                if(!isNumber(lat) || !isNumber(lng)) continue;
+                                var bdPoint = wgs84tobd09(lng,lat).reverse();
+                                var cellName = targetObj.name;
+                                var temObj = {
+                                    point: bdPoint,
+                                    lat: bdPoint[0],
+                                    lng: bdPoint[1],
+                                    name: cellName,
+                                    value: userVal
+                                };
+                                heatMapData.push(temObj);
+                            }
+                            heatMapData.length > 0 && heatMapRender(heatMapData,radiusHeatMap,heatFlag);
+                        })
+            }
+            setInterval(function () {
+                initAll();
+            },1000*60*5);
+        </script>
+    </body>
+</html>

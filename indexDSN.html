@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>迪斯尼保障</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="renderer" content="webkit">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="css/easyui.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/leaflet.draw.css" />
+    <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
+    <link rel="stylesheet" href="css/leaflet.markercluster.css" />
+    <link rel="stylesheet" href="css/leaflet-search.css" />
+    <link rel="stylesheet" href="css/Icon.Label.css" />
+    <link rel="stylesheet" href="css/leaflet.groupedlayercontrol.css" />
+    <!--link rel="stylesheet" href="css/L.Control.Zoomslider.css" /-->
+    <style>
+        body{ margin:0; padding:0; font-family: "Microsoft YaHei";}
+        h5{display: inline;}
+        h4{line-height: 10px;}
+        h3{margin-top: 0px; background-color: darkcyan; border: 2px solid gray;}
+        .collapse span{font-family: "Microsoft YaHei"; display: block;}
+        div a{font-family: "Microsoft YaHei"; font-size: 24px;}
+        #map{ position: absolute; top:0; bottom:0; right: 0px; left:0; }
+        #infoLocation{background-color: rgba(255,255,255,0.5); position: absolute; left: 10px;  bottom: 10px; font-size: 18px; line-height: 18px;}
+        #loading{visibility: hidden; position: absolute; background: none; top: 42%; left: 50%; width: 100px; height: 100px;}
+        #legendControl{
+            position: absolute; bottom: 0px; left: 800px; height: 50px; width: 940px; background: url("images/legend.png");
+        }
+        #netWorkScale{
+            position: absolute; top: 50px; left: 700px; height: 100px; width: 250px; border: none; background-color: none; background: url("images/normalBackGround.png");
+        }
+        #netWorkScale .custom-span-net{
+            color: white; font-size: 22px; line-height: 30px; margin-left: 30px;
+        }
+        #netWorkScale .custom-b-net{
+            color: #00fcff; font-size: 22px; line-height: 30px; 
+        }
+        #allIndexShowRight{
+            position: absolute;
+            right: 80px;
+            height: 1000px;
+            width: 630px;
+            background: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: none;
+            visibility: hidden;
+            /*visibility: hidden;*/
+        }
+        #userData{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 40px;
+            border: 2px solid #252c34;
+        }
+        #dataThroughPut{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 360px;
+            border: 2px solid #252c34;
+        }
+        #hotTerminal{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 680px;
+            border: 2px solid #252c34;
+        }
+        #allIndexShowLeft{
+            position: absolute;
+            left: 80px;
+            height: 1000px;
+            width: 630px;
+            background: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: none;
+            /*visibility: hidden;*/
+        }
+        #userData1{
+            /*background-color: #000720;*/
+            opacity: 1;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 40px;
+            left: 80px;
+            border: none;
+            /*background: url("images/indexBackGroundBig.png") no-repeat;*/
+        }
+        #dataThroughPut1{
+            /*background-color: #000720;*/
+            opacity: 1;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 360px;
+            left: 80px;
+            border: none;
+            /*background: url("images/indexBackGroundBig.png") no-repeat;*/
+        }
+        #hotTerminal1{
+            /*background-color: #000720;*/
+            opacity: 1;
+            position: absolute;
+            height: 300px;
+            width: 600px;
+            top: 680px;
+            left: 80px;
+            border: none;
+            /*background: url("images/indexBackGroundBig.png") no-repeat;*/
+        }
+        .custom-detailed-info{margin-top: 10px; text-align: center;}
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:0px;
+            background: #252c34 ;
+            outline: none;
+            color: white;
+            font-size: 20px;
+            font-family: Microsoft YaHei;
+        }
+        .custom-title-wx{border-bottom: 1px solid cornflowerblue; width: 100%; height: 40px;}
+        .custom-button-left{position: absolute; left: 30px; width: 100px;}
+        .custom-button-right{position: absolute; left: 190px; width: 100px;}
+        .navbar-header{margin-top: 1px; text-align: center; border: 1px solid gray; background-color: gainsboro;}
+        .custom-info-device{margin-top: 16px;}
+        .custom-text-width{width: 60%;}
+        .leaflet-control-layers-selector {top: -5px;}
+        .leaflet-control-layers-group-selector{height: 20px;}
+        .leaflet-control-layers-group-name{font-size: 1.2em; color: cornflowerblue; text-align: match-parent;}
+        .leaflet-control-scale-line{text-align: center; font-size: 18px; line-height: 18px;}
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip{background-color: #252c34; color: white;}
+        .leaflet-control-layers-toggle {
+            background-image: url(images/layers-2x.png);
+            width: 60px;
+            height: 60px;
+        }
+        .leaflet-container a.leaflet-popup-close-button{font-size: 20px; color: gray;}
+        .leaflet-control-layers-base span{font-size: 20px;}
+        .leaflet-control-layers-overlays span{font-size: 20px;}
+        .leaflet-control-search .search-button{width: 40px; height: 40px;background-image: url(images/customSearch.png);}
+        .leaflet-control-search .search-input{height: 38px;}
+        .leaflet-draw-toolbar{width: 40px; height: 40px; background-color: white}
+        .leaflet-draw-toolbar a {
+            background-image: url('images/spritesheet-2x.png');
+            background-repeat: no-repeat;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
+            background-position: -130px -10px;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-edit-edit {
+            background-position: -310px -10px;
+        }
+        .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled {
+            background-position: -430px -10px;
+        }
+        .leaflet-draw-actions-top.leaflet-draw-actions-bottom a {
+            height: 32px;
+            line-height: 32px;
+            font-size: 20px;
+            margin-top: 4px;
+            margin-left: 14px;
+        }
+        .leaflet-draw-actions-top.leaflet-draw-actions-bottom a[title="Cancel editing, discards all changes."]{margin-left: -10px;}
+        .leaflet-bar a, .leaflet-bar a:hover {
+            background-color: #fff;
+            border-bottom: 1px solid #ccc;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: black;
+        }
+        .marker-cluster div{font-size: 36px; width: 40px; height: 40px; }
+        .sweet-deal-label {
+            background-color: rgba(255, 255, 255, 0.001);
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            color: #000000;
+            font-weight: normal;
+            font-size: 10px;
+            z-index: 9999;
+        }
+        .leaflet-contextmenu a.leaflet-contextmenu-item{
+            font-size: 22px;
+        }
+        .img-preview{
+            -moz-border-bottom-colors: none;
+            -moz-border-left-colors: none;
+            -moz-border-right-colors: none;
+            -moz-border-top-colors: none;
+            border-bottom-color: #B8B8B8;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            border-bottom-style: solid;
+            border-bottom-width: 1px;
+            border-image-outset: 0 0 0 0;
+            border-image-repeat: stretch stretch;
+            border-image-slice: 100% 100% 100% 100%;
+            border-image-source: none;
+            border-image-width: 1 1 1 1;
+            border-left-color-ltr-source: physical;
+            border-left-color-rtl-source: physical;
+            border-left-color-value: #B8B8B8;
+            border-left-style-ltr-source: physical;
+            border-left-style-rtl-source: physical;
+            border-left-style-value: solid;
+            border-left-width-ltr-source: physical;
+            border-left-width-rtl-source: physical;
+            border-left-width-value: 1px;
+            border-right-color-ltr-source: physical;
+            border-right-color-rtl-source: physical;
+            border-right-color-value: #B8B8B8;
+            border-right-style-ltr-source: physical;
+            border-right-style-rtl-source: physical;
+            border-right-style-value: solid;
+            border-right-width-ltr-source: physical;
+            border-right-width-rtl-source: physical;
+            border-right-width-value: 1px;
+            border-top-color: #B8B8B8;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            border-top-style: solid;
+            border-top-width: 1px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+            float: left;
+        }
+    </style>
+    <script>
+        //基本URL
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+        var hostName = window.location.hostname;
+        hostName != '' && (baseUrl = hostName); 
+        //基本端口号
+        var basePort = '8080';
+        var locationPort = window.location.port;                
+        locationPort != '' && (basePort = locationPort);
+    </script>
+    <script src="scripts/jquery-1.9.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/jquery.easyui.min.js"></script>
+    <script src="scripts/leaflet.js"></script>
+    <script src="scripts/heatmap.js"></script>
+    <script src="scripts/leaflet-heatmap.js"></script>
+    <!--script src="scripts/leaflet-heat.js"></script-->
+    <script src="scripts/leaflet.draw.js"></script>
+    <script src="scripts/leaflet.contextmenu.js"></script>
+    <script src="scripts/leaflet.markercluster-src.js"></script>
+    <script src="scripts/leaflet-search.js"></script>
+    <script src="scripts/Icon.Label.js"></script>
+    <script src="scripts/leaflet.groupedlayercontrol.js"></script>
+    <!--script src="scripts/L.Control.Zoomslider.js"></script-->
+    <script src="scripts/Semicircle.js"></script>
+    <script src="scripts/leaflet.baidu.min.js"></script>
+    <script src="scripts/testData.js"></script>
+    <script src="scripts/initMapOriginDSN.js"></script>
+    <script>
+        //地铁线
+        var subway1 = new L.featureGroup(),
+                subway2 = new L.featureGroup(),
+                subway3 = new L.featureGroup(),
+                subway4 = new L.featureGroup(),
+                subway5 = new L.featureGroup(),
+                subway6 = new L.featureGroup(),
+                subway7 = new L.featureGroup(),
+                subway8 = new L.featureGroup(),
+                subway9 = new L.featureGroup(),
+                subway10 = new L.featureGroup(),
+                subway11 = new L.featureGroup();
+        //高架桥
+        var roadNH = new L.featureGroup(),
+                roadWH = new L.featureGroup(),
+                roadZH = new L.featureGroup(),
+                roadYA = new L.featureGroup(),
+                roadNB= new L.featureGroup();
+    </script>
+</head>
+    <body>
+        <div id="map"></div>
+		<div id="infoLocation"></div>
+        <div id="loading"></div>
+        <div id="allIndexShowRight" class="img-preview">
+            <div id="userData" class="img-preview"></div>
+            <div id="dataThroughPut" class="img-preview"></div>
+            <div id="hotTerminal" class="img-preview"></div>
+        </div>
+        <!--div id="allIndexShowLeft" class="img-preview"-->
+            <div id="userData1" ></div>
+            <div id="dataThroughPut1" ></div>
+            <div id="hotGrounds"></div>
+            <div id="hotTerminal1"></div>
+        <!--/div-->
+        <!--<div id="createCustomWindow" class="img-preview" style="visibility: hidden; background-color: #252c34; opacity: 0.9; position: absolute; left: 100px; top: 200px; height: 340px; width: 650px; background: url('images/bigTrendPlot.png') no-repeat;">-->
+            <!--<img src="images/closePlot.png" style="position: absolute; right: 20px;" onclick="closeTrendPlot()"/>-->
+            <!--<div id="trendPlotFromChild"></div>-->
+        <!--</div>-->
+        <div id="trendPlotFromChild" style="visibility: hidden;"></div>
+        <div id="win"  style="visibility: hidden;"></div>
+        <div id="legendControl" ></div>
+        <div id="netWorkScale" class="img-preview"></div>
+        <script>
+            //地图相关定义
+            var map;
+            var switchControl;
+            var baseLayer,
+                    normalLayer,
+                    roadLayer,
+                    satelliteLayer;
+            var markersLayer = new L.featureGroup();//普通小区图层
+            var polygonLayer = new L.featureGroup();//热点区域多边形图层
+            var sectorLayer = new L.featureGroup();//扇形小区图层
+            var labelLayer = new L.featureGroup();//标注图层
+            var districtsLayer = new L.featureGroup();//框选查询及搜索查询到的小区
+            var temLayer = new L.featureGroup();//超链接点击时的单个小区图层
+            var rasterLayer = new L.featureGroup();//网格图层
+            var rectangleLayer = new L.featureGroup();//真实栅格图层
+            var labelRectangleLayer = new L.featureGroup();//真实栅格图层标注
+            var markerClusters = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 50, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var markerClusters2G = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 100, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var markerClusters3G = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 100, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var markerClusters4G = L.markerClusterGroup({
+                chunkedLoading: true, maxClusterRadius: 100, /*disableClusteringAtZoom: 17,*/ zoomToBoundsOnClick: true, spiderfyOnMaxZoom: true
+            });
+            var pianquLayer = new L.featureGroup();//50个片区图层
+            var pianquPopupLayer = new L.featureGroup();//片区图层悬浮框
+            var markersLayer2G = new L.featureGroup();//普通小区图层
+            var markersLayer3G = new L.featureGroup();//普通小区图层
+            var markersLayer4G = new L.featureGroup();//普通小区图层
+            var markersLayerWarning = new L.featureGroup();//告警小区
+            var heatMapLayer;//热力图
+            //指标相关定义
+            var heatIndexDis = '迪士尼';//初始化热点区域，动态改变
+            var radiusHeatMap = 0.001;//热力图渲染半径，动态改变
+            var cacheHeatMapData = [];//缓存热力图数据
+            var lastZoomLevel = 13;//上次地图层级
+            var detailedInfoVector = [];//缓存小区数据
+            //var maxPosHeatMap = [31.94256,122.104797],//热力图渲染区域最大最小坐标
+            //        minPosHeatMap = [30.61350,120.92651];
+            var heatFlag = false; //控制热力图是否选中
+            //场景保障地图中心点            
+            var mapCenterScene = {
+                '地铁': [31.236731,121.486262],
+                '高架': [31.227886,121.476417],
+                '景点': [31.23784,121.489137],
+                '商业区': [31.198163,121.447455],
+                '高速': [31.103556,121.343108],
+                '高铁': [31.195769,121.338157],
+                '交通枢纽': [31.200355,121.328017],
+                'MWC': [31.21651,121.573883],
+                '迪士尼': [31.144907,121.674224]
+            };
+            //初始化函数入口
+			window.onload = initAll();
+            function initAll(){
+                initBaiduMap();
+                //getDetailedInfo();
+                //addDynamicMenu(testData);
+                addXQ2Map(heatIndexDis,heatFlag);
+                //addWangGe();                
+                addAllDis();
+                //addMedianCycleRoad();
+                //addSubway();
+                //addPosNBGJ('南北高架',heatFlag);
+                showAllIndexInfo(heatIndexDis,false);                
+            }
+            //测试代码,供其他屏调用
+           // setTimeout(function(){
+           //     // getParasToSetStyle('red',['迪士尼6#宏站HL1H_6','浦迪城堡HL1H_133']);//设置扇形小区颜色
+           //     // getParasToOpenPopup(31.138911,121.666265,'6387:8337','浦迪停车ND1_1','迪士尼', '4G','宏站');//打开小区tip
+           //     // getParasToOpenLL('99332:4','南北高架');//打开小区流量趋势图
+           //     // getParasToOpenTotalYHS('99332:4','南北高架');//打开小区用户数趋势图
+           //     getParasToSetPolygonColor('red','2片区-RD&E','15:27:43','一级告警','0.01MB','0.09MB','somthing');//设置片区颜色
+           //     //getParasToSetPolygonColorBack();//清除上次设置的片区颜色
+           // },1000*5);            
+            //定时刷新页面
+            var refreshTime = setInterval(function () {
+                heatFlag = false;
+                addXQ2Map(heatIndexDis,heatFlag);
+                addAllDis();
+                showAllIndexInfo(heatIndexDis,true);
+                closeRightScreenInfo();
+            },1000*60*5);     
+            //switchSceneGuard('MWC',31.21651,121.573883); 
+            // setTimeout(function(){
+            //     getParas2SetChartSize(true);
+            // },1000);                                                 
+        </script>
+    </body>
+</html>

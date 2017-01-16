@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        #infoAll{width: 860px; height: 460px; background-color: #252c34; border: none;  background: url("images/maxBig1.png") no-repeat;}
+        #popupContent{
+            overflow: hidden;
+            border:1px solid #CCC;
+            background-color:#252c34;
+            border: none;
+            padding:5px;
+            margin-left: 20px;
+            width:830px;
+            height:430px;
+        }
+        p{color: #ffffff;}
+        /*img{cursor: pointer;}*/
+    </style>
+</head>
+<body>
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="infoAll">
+    <img src="images/closePlot.png" style="z-index: 99; position: absolute; right: 50px; top: 25px; width: 16px; height: 16px; cursor: pointer;" title="关闭" onclick="closeTrendPlotParent()"/>
+    <img src="images/maxim2.png" style="z-index: 99; position: absolute; right: 70px; top: 25px; width: 16px; height: 16px; " title="最大化" />
+    <img src="images/returnNormal.png" style="z-index: 99; position: absolute; right: 90px; top: 25px; width: 16px; height: 16px; cursor: pointer;" title="还原" onclick="normalTrendPlotParent()"/>
+    <!-- 添加各种趋势图 -->
+    <div id="popupContent"></div>
+</div>
+
+<div id="divWhoise" style="border:none; position: absolute;left:350px;top:150px;height: 200px; background-color: #252c34;">
+    <input type="image" src="../images/loading.gif"  width="124px" height="124px" align="middle" /><p>数据加载中，请稍后...</p>
+</div>
+<!-- ECharts单文件引入 -->
+<script src="jquery-1.9.1/jquery-1.9.1.js"></script>
+<script src="echarts/build/dist/echarts.js"></script>
+<script type="text/javascript">
+    // ECharts路径配置
+    require.config({
+        paths: {
+            echarts: 'echarts/build/dist'
+        }
+    });
+    //基本URL
+    var baseUrl = '10.221.247.7';
+    var locationUrl = window.location.href;
+    locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    var hostName = window.location.hostname;
+    hostName != '' && (baseUrl = hostName);        
+    //基本端口号
+    var basePort = '8080';
+    var locationPort = window.location.port;                
+    locationPort != '' && (basePort = locationPort);
+    //解决跨域请求数据问题
+    jQuery.support.cors = true;
+    jQuery.ajaxSetup({ scriptCharset: "utf-8" , contentType: "application/json; charset=utf-8"});
+    //判断对象是否为空
+    function isEmpty(obj)
+    {
+        for (var name in obj)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    var strIndexName ="";
+    //获取页面传递过来的参数
+    //var indexName = window.location.search.split("?")[1];
+    var start = window.location.search.indexOf("?");
+    //var end1 = window.location.search.indexOf("!");
+    var end2 = window.location.search.indexOf("&");
+    var indexName = decodeURIComponent(window.location.search.substring(start+1,end2),"utf-8");//记录热点名称
+    //var infoName = window.location.search.substring(end1+1,end2);//记录业务名称
+    var strHeatDistricts = decodeURIComponent(window.location.search.substring(end2+1),"utf-8");//记录热点区域名称
+    var chineseName = strHeatDistricts;
+
+    var cellName ="";
+    /*/添加标题信息
+    $.getJSON("http://10.221.247.7:8080/services/ws/rest/bchol/select_cellinfo?name="+encodeURIComponent(chineseName),function(data){
+        var length=data.rows.length;
+        for (var i=0;i<length;i++) {
+            var lac = data.rows[i].lac;
+            var ci = data.rows[i].ci;
+            var lacci = lac + ':' + ci;
+            if (lacci == indexName) {
+                cellName =data.rows[i].cellName;
+                //document.getElementById("title").innerHTML = cellName + "指标详情";
+                return;
+            }
+        }
+    });
+    //*/
+    $.getJSON("http://" + baseUrl + ":" + basePort +"/stream/usernum/sites?hours=3&site="+encodeURIComponent(indexName),function(data){
+        $('#divWhoise').show();
+        var objectData = data[indexName];
+        var lengthData =objectData.length;
+        var array2G =[];
+        var array3G =[];
+        var array4G =[];
+        var timeData =[];
+        for (var i=0; i<lengthData;i++){
+            array2G.push(objectData[i]['2G']);
+            array3G.push(objectData[i]['3G']);
+            array4G.push(objectData[i]['4G']);
+            var time = objectData[i].time.substring(11,16);
+            timeData.push(time);
+        }
+
+        require(
+                [
+                    'echarts',
+                    'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                ],
+                function (ec) {
+                    // 基于准备好的dom，初始化echarts图表
+                    var myChart = ec.init(document.getElementById('popupContent'));
+
+                    option = {
+                        title : {
+                            textStyle: {
+                                fontSize: 30,
+                                color: '#ffffff'
+                            }
+                            //text: cellName + ' 使用业务用户数据历史趋势图'
+                        },
+                        tooltip : {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            textStyle: {
+                                fontSize: 24,
+                                color: '#ffffff'
+                            },
+                            y: 'bottom',
+                            x: 'center',
+                            data:['4G用户数','3G用户数','2G用户数']
+                        },
+                        calculable : true,
+                        grid: {
+                            x: '10%',
+                            width: '80%',
+                            borderWidth: 0
+                            //backgroundColor: '#252c34'
+                        },
+                        xAxis : [
+                            {
+                                type : 'category',
+                                axisLabel: {
+                                    textStyle: {
+                                        fontSize: 20,
+                                        color: '#ffffff'
+                                    }
+                                },
+                                boundaryGap : false,
+                                splitLine: {
+                                    show: true,
+                                    lineStyle: {
+                                        color: ['#003250'],
+                                        width: 1,
+                                        type: 'solid'
+                                    }
+                                },
+                                //name:'时间',
+                                data : timeData
+                            }
+                        ],
+                        yAxis : [
+                            {
+                                type : 'value',
+                                name:'用户数（人）',
+                                axisLabel: {
+                                    textStyle: {
+                                        fontSize: 20,
+                                        color: '#ffffff'
+                                    }
+                                },
+                                nameTextStyle: {
+                                    fontSize: 20,
+                                    color: '#00fcff'
+                                },
+                                splitLine: {
+                                    show: true,
+                                    lineStyle: {
+                                        color: ['#003250'],
+                                        width: 1,
+                                        type: 'solid'
+                                    }
+                                }
+                            }
+                        ],
+                        series : [
+                            {
+                                name:'4G用户数',
+                                type:'line',
+                                itemStyle:{
+                                    normal: {color:'#fc018f'}
+                                },
+                                data:array4G
+                            },
+                            {
+                                name:'3G用户数',
+                                type:'line',
+                                itemStyle:{
+                                    normal: {color:'#66f2ff  '}
+                                },
+                                data:array3G
+                            },
+                            {
+                                name:'2G用户数',
+                                type:'line',
+                                itemStyle:{
+                                    normal: {color:'#00f859  '}
+                                },
+                                data:array2G
+                            }
+                        ]
+                    };
+                    // 为echarts对象加载数据,并添加单击响应事件
+                    myChart.setOption(option,true);
+
+                }
+        );
+        $('#divWhoise').hide();
+    });
+    function closeTrendPlotParent(){
+        window.parent.closeTrendPlot();
+    }
+    function normalTrendPlotParent(){
+        window.parent.callDrawTrendPlot("pagesDSN/trendPlots/siteUserCountTime.html?"+indexName+"&"+strHeatDistricts);
+    }
+</script>
+</body>

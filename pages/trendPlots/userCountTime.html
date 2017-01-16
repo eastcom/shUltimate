@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        #popupContent{
+            overflow: hidden;
+            border:1px solid #CCC;
+            background-color:#F9F9F9;
+            border:1px solid #333;
+            padding:5px;
+            width:1100px;
+            height:300px;
+        }
+    </style>
+</head>
+<body>
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<!-- 添加各种趋势图 -->
+<div id="popupContent"></div>
+<div id="divWhoise" style="border:none; position: absolute;left:500px;top:90px;height: 200px;">
+    <input type="image" src="../images/loading.gif"  width="124px" height="124px" align="middle" /><p>数据加载中，请稍后...</p>
+</div>
+<!-- ECharts单文件引入 -->
+<script src="jquery-1.9.1/jquery-1.9.1.js"></script>
+<script src="echarts/build/dist/echarts.js"></script>
+<script type="text/javascript">
+    // ECharts路径配置
+    require.config({
+        paths: {
+            echarts: 'echarts/build/dist'
+        }
+    });
+    var baseUrl = "10.221.247.7";
+    var s=  window.location.href;
+    if(s.indexOf('10.10.46.60') != -1){
+        baseUrl = '10.10.46.60';
+    }
+    //解决跨域请求数据问题
+    jQuery.support.cors = true;
+    jQuery.ajaxSetup({ scriptCharset: "utf-8" , contentType: "application/json; charset=utf-8"});
+    //判断对象是否为空
+    function isEmpty(obj)
+    {
+        for (var name in obj)
+        {
+            return false;
+        }
+        return true;
+    }
+    function callTrendPlot(str){
+        $.getJSON("http://"+baseUrl+":8080/stream/usernum/hotspots?hours=12&hotspot="+encodeURIComponent(str),function(data){
+            $('#divWhoise').show();
+            var objectData = data[str];
+            var lengthData =objectData.length;
+            var array2G =[];
+            var array3G =[];
+            var array4G =[];
+            var timeData =[];
+            for (var i=0; i<lengthData;i++){
+                array2G.push(objectData[i]['2G']);
+                array3G.push(objectData[i]['3G']);
+                array4G.push(objectData[i]['4G']);
+                var time = objectData[i].time.substring(11,16);
+                timeData.push(time);
+            }
+
+            require(
+                    [
+                        'echarts',
+                        'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                    ],
+                    function (ec) {
+                        // 基于准备好的dom，初始化echarts图表
+                        var myChart = ec.init(document.getElementById('popupContent'));
+
+                        option = {
+                            title : {
+                                text: strIndexName + ' 使用业务用户数据历史趋势图'
+                            },
+                            tooltip : {
+                                trigger: 'axis'
+                            },
+                            legend: {
+                                data:['4G用户数','3G用户数','2G用户数']
+                            },
+                            calculable : true,
+                            xAxis : [
+                                {
+                                    type : 'category',
+                                    boundaryGap : false,
+                                    name:'时间',
+                                    data : timeData
+                                }
+                            ],
+                            yAxis : [
+                                {
+                                    type : 'value',
+                                    name:'用户数（人）',
+                                    axisLabel : {
+                                        formatter: '{value}'
+                                    }
+                                }
+                            ],
+                            series : [
+                                {
+                                    name:'4G用户数',
+                                    type:'line',
+                                    data:array4G
+                                },
+                                {
+                                    name:'3G用户数',
+                                    type:'line',
+                                    data:array3G
+                                },
+                                {
+                                    name:'2G用户数',
+                                    type:'line',
+                                    data:array2G
+                                }
+                            ]
+                        };
+                        // 为echarts对象加载数据,并添加单击响应事件
+                        myChart.setOption(option,true);
+
+                    }
+            );
+            $('#divWhoise').hide();
+        });
+    }
+    var strKeyValue = window.location.search.split("?")[1];
+    //alert("您要传递的参数值是"+strKeyValue);
+
+    //var strIndexName = strKeyValue;
+    var strIndexName =decodeURIComponent(strKeyValue,"utf-8");
+    //alert(strIndexName);
+    //解析地图页面传过来的参数
+    var indexName = strIndexName;
+    callTrendPlot(strIndexName);
+    //alert(indexName);
+    /*/
+    switch (indexName){
+        case "yazhoudianzi":
+            strIndexName = "新国际博览中心";
+            callTrendPlot(strIndexName);
+            break;
+        case "laolunsi":
+            strIndexName = "劳伦斯";
+            callTrendPlot(strIndexName);
+            break;
+        case "yinghuajie":
+            strIndexName = "世纪公园";
+            callTrendPlot(strIndexName);
+            break;
+        case "F1saichang":
+            strIndexName = "F1赛场";
+            callTrendPlot(strIndexName);
+            break;
+        case "zhongbohui":
+            strIndexName = "中国博览会";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMAMeeting":
+            strIndexName = "GSMA峰会";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMAMeetingAround":
+            strIndexName = "GSMA-周边区域";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMAMeetingCenter":
+            strIndexName = "GSMA-核心区域";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMAMeetingEntrance1":
+            strIndexName = "GSMA-1号入口厅";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMAMeetingEntrance2":
+            strIndexName = "GSMA-2号入口厅";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-E3、E6、E7":
+            strIndexName = "GSMA-E3、E6、E7";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-E6":
+            strIndexName = "GSMA-E6";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-E6、E7":
+            strIndexName = "GSMA-E6、E7";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-N1":
+            strIndexName = "GSMA-N1";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-N2":
+            strIndexName = "GSMA-N2";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-N3、N4":
+            strIndexName = "GSMA-N3、N4";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-N4、N5":
+            strIndexName = "GSMA-N4、N5";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-N5":
+            strIndexName = "GSMA-N5";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMAMPark":
+            strIndexName = "GSMA-P停车场";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-W1":
+            strIndexName = "GSMA-W1";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-W2、E2":
+            strIndexName = "GSMA-W2、E2";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-W3":
+            strIndexName = "GSMA-W3";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMA-W4、N1、N2":
+            strIndexName = "GSMA-W4、N1、N2";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMARoads":
+            strIndexName = "GSMA-罗山路/龙阳路";
+            callTrendPlot(strIndexName);
+            break;
+        case "GSMAGround":
+            strIndexName = "GSMA-中心广场";
+            callTrendPlot(strIndexName);
+            break;
+    }
+    //*/
+
+</script>
+</body>

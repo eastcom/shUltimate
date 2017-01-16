@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        #popupContent{
+            overflow: hidden;
+            border:1px solid #CCC;
+            background-color:#F9F9F9;
+            border:1px solid #333;
+            padding:5px;
+            width:1100px;
+            height:300px;
+        }
+    </style>
+</head>
+<body>
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<!-- 添加各种趋势图 -->
+<div id="popupContent"></div>
+<div id="divWhoise" style="border:none; position: absolute;left:500px;top:90px;height: 200px;">
+    <input type="image" src="../images/loading.gif"  width="124px" height="124px" align="middle" /><p>数据加载中，请稍后...</p>
+</div>
+<!-- ECharts单文件引入 -->
+<script src="jquery-1.9.1/jquery-1.9.1.js"></script>
+<script src="echarts/build/dist/echarts.js"></script>
+<script type="text/javascript">
+    // ECharts路径配置
+    require.config({
+        paths: {
+            echarts: 'echarts/build/dist'
+        }
+    });
+    var baseUrl = "10.221.247.7";
+    var s=  window.location.href;
+    if(s.indexOf('10.10.46.60') != -1){
+        baseUrl = '10.10.46.60';
+    }
+    //解决跨域请求数据问题
+    jQuery.support.cors = true;
+    jQuery.ajaxSetup({ scriptCharset: "utf-8" , contentType: "application/json; charset=utf-8"});
+    //判断对象是否为空
+    function isEmpty(obj)
+    {
+        for (var name in obj)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    var strIndexName ="";
+    //获取页面传递过来的参数
+    //var indexName = window.location.search.split("?")[1];
+    var start = window.location.search.indexOf("?");
+    //var end1 = window.location.search.indexOf("!");
+    var end2 = window.location.search.indexOf("&");
+    var indexName = decodeURIComponent(window.location.search.substring(start+1,end2),"utf-8");//记录热点名称
+    //var infoName = window.location.search.substring(end1+1,end2);//记录业务名称
+    var strHeatDistricts = decodeURIComponent(window.location.search.substring(end2+1),"utf-8");//记录热点区域名称
+    var chineseName = strHeatDistricts;
+
+    var cellName ="";
+    /*/添加标题信息
+    $.getJSON("http://10.221.247.7:8080/services/ws/rest/bchol/select_cellinfo?name="+encodeURIComponent(chineseName),function(data){
+        var length=data.rows.length;
+        for (var i=0;i<length;i++) {
+            var lac = data.rows[i].lac;
+            var ci = data.rows[i].ci;
+            var lacci = lac + ':' + ci;
+            if (lacci == indexName) {
+                cellName =data.rows[i].cellName;
+                //document.getElementById("title").innerHTML = cellName + "指标详情";
+                return;
+            }
+        }
+    });
+    //*/
+    $.getJSON("http://" + baseUrl +":8080/stream/usernum/sites?hours=12&site="+encodeURIComponent(indexName),function(data){
+        $('#divWhoise').show();
+        var objectData = data[indexName];
+        var lengthData =objectData.length;
+        var array2G =[];
+        var array3G =[];
+        var array4G =[];
+        var timeData =[];
+        for (var i=0; i<lengthData;i++){
+            array2G.push(objectData[i]['2G']);
+            array3G.push(objectData[i]['3G']);
+            array4G.push(objectData[i]['4G']);
+            var time = objectData[i].time.substring(11,16);
+            timeData.push(time);
+        }
+
+        require(
+                [
+                    'echarts',
+                    'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                ],
+                function (ec) {
+                    // 基于准备好的dom，初始化echarts图表
+                    var myChart = ec.init(document.getElementById('popupContent'));
+
+                    option = {
+                        title : {
+                            text: cellName + ' 使用业务用户数据历史趋势图'
+                        },
+                        tooltip : {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            data:['4G用户数','3G用户数','2G用户数']
+                        },
+                        calculable : true,
+                        xAxis : [
+                            {
+                                type : 'category',
+                                boundaryGap : false,
+                                name:'时间',
+                                data : timeData
+                            }
+                        ],
+                        yAxis : [
+                            {
+                                type : 'value',
+                                name:'用户数（人）',
+                                axisLabel : {
+                                    formatter: '{value}'
+                                }
+                            }
+                        ],
+                        series : [
+                            {
+                                name:'4G用户数',
+                                type:'line',
+                                data:array4G
+                            },
+                            {
+                                name:'3G用户数',
+                                type:'line',
+                                data:array3G
+                            },
+                            {
+                                name:'2G用户数',
+                                type:'line',
+                                data:array2G
+                            }
+                        ]
+                    };
+                    // 为echarts对象加载数据,并添加单击响应事件
+                    myChart.setOption(option,true);
+
+                }
+        );
+        $('#divWhoise').hide();
+    });
+</script>
+</body>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        #popupContent{
+            overflow: hidden;
+            border:1px solid #CCC;
+            background-color:#F9F9F9;
+            border:1px solid #333;
+            padding:5px;
+            width:1100px;
+            height:300px;
+        }
+    </style>
+</head>
+<body>
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<!-- 添加各种趋势图 -->
+<div id="popupContent"></div>
+<div id="divWhoise" style="border:none; position: absolute;left:500px;top:90px;height: 200px;">
+    <input type="image" src="../images/loading.gif"  width="124px" height="124px" align="middle" /><p>数据加载中，请稍后...</p>
+</div>
+<!-- ECharts单文件引入 -->
+<script src="jquery-1.9.1/jquery-1.9.1.js"></script>
+<script src="echarts/build/dist/echarts.js"></script>
+<script type="text/javascript">
+    // ECharts路径配置
+    require.config({
+        paths: {
+            echarts: 'echarts/build/dist'
+        }
+    });
+    var baseUrl = "10.221.247.7";
+    var s=  window.location.href;
+    if(s.indexOf('10.10.46.60') != -1){
+        baseUrl = '10.10.46.60';
+    }
+    //解决跨域请求数据问题
+    jQuery.support.cors = true;
+    jQuery.ajaxSetup({ scriptCharset: "utf-8" , contentType: "application/json; charset=utf-8"});
+    //判断对象是否为空
+    function isEmpty(obj)
+    {
+        for (var name in obj)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    var strIndexName ="";
+    //获取页面传递过来的参数
+    //var indexName = window.location.search.split("?")[1];
+    var start = window.location.search.indexOf("?");
+    var end1 = window.location.search.indexOf("!");
+    var end2 = window.location.search.indexOf("&");
+    var indexName = decodeURIComponent(window.location.search.substring(start+1,end1),"utf-8");//记录热点名称
+    var infoName = decodeURIComponent(window.location.search.substring(end1+1,end2),"utf-8");//记录业务名称
+    var strHeatDistricts = decodeURIComponent(window.location.search.substring(end2+1),"utf-8");//记录热点区域名称
+    var chineseName = strHeatDistricts;
+    var cellName ="";
+    //获得当前时间倒推n分钟
+    function getCurrentTimeMin(n){
+        var nowDate = new Date();
+        var min = nowDate.getMinutes(),
+                hour = nowDate.getHours(),
+                date = nowDate.getDate(),
+                month = nowDate.getMonth() + 1 ,
+                year = nowDate.getFullYear();
+        //min<n && (hour -= 1, min = min + 60 - n);
+        if(hour === 0){
+            hour += 24;
+        }
+        if(min<n){
+            hour -= 1;
+            //if(hour<0) hour += 1;
+            min = min + 60 - n;
+        }
+        min<n || ( min -= n);
+        if(hour === 24){
+            hour = 0;
+        }
+        var result = year + '-' + month + '-' + date + ' ' + hour + ':' + min + ':' + '00';
+        //console.log(result)
+        return result;
+    }
+    //获得当前时间倒推n小时
+    function getCurrentTimeHour(n){
+        var nowDate = new Date();
+        var min = nowDate.getMinutes(),
+                hour = nowDate.getHours(),
+                date = nowDate.getDate(),
+                month = nowDate.getMonth() + 1 ,
+                year = nowDate.getFullYear();
+        //var hour = 2;
+        if(hour < n){
+            hour += 24;
+        }
+        hour -= n;
+        if(hour === 24) {
+            hour = 0;
+        }
+        if(min <10){
+            min = '0' + min;
+            if(hour <0){
+                hour = 0;
+            }
+        }
+        var result = year + '-' + month + '-' + date + ' ' + hour + ':' + min + ':' + '00';
+        //console.log(result)
+        return result;
+    }
+    var timeStart = getCurrentTimeHour(3);
+    var timeEnd = getCurrentTimeMin(0);
+    /*/
+    $.getJSON("http://" + baseUrl +":8080/stream/ue/site-majors?site="+encodeURIComponent(indexName),function(data){
+        $('#divWhoise').show();
+        var objectData = data;
+        var lengthData=objectData.length;
+        //alert(lengthData);
+        var array2G =[];
+        var array3G =[];
+        var array4G =[];
+        var timeData =[];
+        for (var i=0; i<lengthData;i++){
+            var http_display_succrate2G = 0,
+                    http_display_delay2G = 0,
+                    tcp_succrate2G = 0,
+                    tcp_succ_delay2G = 0;
+            var http_display_succrate3G = 0,
+                    http_display_delay3G = 0,
+                    tcp_succrate3G = 0,
+                    tcp_succ_delay3G = 0;
+            var http_display_succrate4G = 0,
+                    http_display_delay4G = 0,
+                    tcp_succrate4G = 0,
+                    tcp_succ_delay4G = 0;
+            if(! isEmpty(objectData[i]['4G'])) {
+                for (var name in objectData[i]['4G']) {
+                    if (name == infoName) {
+                        if (objectData[i]['4G'][name] != null) {
+                            //dataThroughPut4GUl = objectData[i]['4G'][name].ul_bytes / 1024 / 1024 + objectData[i]['4G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['4G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut4GDl = objectData[i]['4G'][name].dl_bytes / 1024 / 1024 + objectData[i]['4G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['4G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut4G = dataThroughPut4GUl + dataThroughPut4GDl;
+                            http_display_succrate4G = objectData[i]['4G'][name].http_display_succrate;
+                        }
+                        if (objectData[i]['3G'][name] != null) {
+                            //dataThroughPut3GUl = objectData[i]['3G'][name].ul_bytes / 1024 / 1024 + objectData[i]['3G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['3G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut3GDl = objectData[i]['3G'][name].dl_bytes / 1024 / 1024 + objectData[i]['3G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['3G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut3G = dataThroughPut3GUl + dataThroughPut3GDl;
+                            http_display_succrate3G = objectData[i]['3G'][name].http_display_succrate;
+                        }
+                        if (objectData[i]['2G'][name] != null) {
+                            //dataThroughPut2GUl = objectData[i]['2G'][name].ul_bytes / 1024 / 1024 + objectData[i]['2G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['2G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut2GDl = objectData[i]['2G'][name].dl_bytes / 1024 / 1024 + objectData[i]['2G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['2G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut2G = dataThroughPut2GUl + dataThroughPut2GDl;
+                            http_display_succrate2G = objectData[i]['2G'][name].http_display_succrate;
+                        }
+                        continue;
+                    }
+                }
+                array2G.push(parseInt(http_display_succrate2G * 10000) / 100);
+                array3G.push(parseInt(http_display_succrate3G * 10000) / 100);
+                array4G.push(parseInt(http_display_succrate4G * 10000) / 100);
+                //alert(array4G[i]);
+                var time = objectData[i].time.substring(11, 16);
+                timeData.push(time);
+                continue;
+            }
+            if(! isEmpty(objectData[i]['3G'])) {
+                for (var name in objectData[i]['3G']) {
+                    if (name == infoName) {
+                        if (objectData[i]['4G'][name] != null) {
+                            //dataThroughPut4GUl = objectData[i]['4G'][name].ul_bytes / 1024 / 1024 + objectData[i]['4G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['4G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut4GDl = objectData[i]['4G'][name].dl_bytes / 1024 / 1024 + objectData[i]['4G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['4G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut4G = dataThroughPut4GUl + dataThroughPut4GDl;
+                            http_display_succrate4G = objectData[i]['4G'][name].http_display_succrate;
+                        }
+                        if (objectData[i]['3G'][name] != null) {
+                            //dataThroughPut3GUl = objectData[i]['3G'][name].ul_bytes / 1024 / 1024 + objectData[i]['3G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['3G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut3GDl = objectData[i]['3G'][name].dl_bytes / 1024 / 1024 + objectData[i]['3G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['3G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut3G = dataThroughPut3GUl + dataThroughPut3GDl;
+                            http_display_succrate3G = objectData[i]['3G'][name].http_display_succrate;
+                        }
+                        if (objectData[i]['2G'][name] != null) {
+                            //dataThroughPut2GUl = objectData[i]['2G'][name].ul_bytes / 1024 / 1024 + objectData[i]['2G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['2G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut2GDl = objectData[i]['2G'][name].dl_bytes / 1024 / 1024 + objectData[i]['2G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['2G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut2G = dataThroughPut2GUl + dataThroughPut2GDl;
+                            http_display_succrate2G = objectData[i]['2G'][name].http_display_succrate;
+                        }
+                        continue;
+                    }
+                }
+                array2G.push(parseInt(http_display_succrate2G * 10000) / 100);
+                array3G.push(parseInt(http_display_succrate3G * 10000) / 100);
+                array4G.push(parseInt(http_display_succrate4G * 10000) / 100);
+                //alert(array4G[i]);
+                var time = objectData[i].time.substring(11, 16);
+                timeData.push(time);
+                continue;
+            }
+            if(! isEmpty(objectData[i]['2G'])) {
+                for (var name in objectData[i]['2G']) {
+                    if (name == infoName) {
+                        if (objectData[i]['4G'][name] != null) {
+                            //dataThroughPut4GUl = objectData[i]['4G'][name].ul_bytes / 1024 / 1024 + objectData[i]['4G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['4G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut4GDl = objectData[i]['4G'][name].dl_bytes / 1024 / 1024 + objectData[i]['4G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['4G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut4G = dataThroughPut4GUl + dataThroughPut4GDl;
+                            http_display_succrate4G = objectData[i]['4G'][name].http_display_succrate;
+                        }
+                        if (objectData[i]['3G'][name] != null) {
+                            //dataThroughPut3GUl = objectData[i]['3G'][name].ul_bytes / 1024 / 1024 + objectData[i]['3G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['3G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut3GDl = objectData[i]['3G'][name].dl_bytes / 1024 / 1024 + objectData[i]['3G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['3G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut3G = dataThroughPut3GUl + dataThroughPut3GDl;
+                            http_display_succrate3G = objectData[i]['3G'][name].http_display_succrate;
+                        }
+                        if (objectData[i]['2G'][name] != null) {
+                            //dataThroughPut2GUl = objectData[i]['2G'][name].ul_bytes / 1024 / 1024 + objectData[i]['2G'][name].ul_bytes_100k / 1024 / 1024 + objectData[i]['2G'][name].ul_bytes_500k / 1024 / 1024;//记录4G流量,单位是MB
+                            //dataThroughPut2GDl = objectData[i]['2G'][name].dl_bytes / 1024 / 1024 + objectData[i]['2G'][name].dl_bytes_100k / 1024 / 1024 + objectData[i]['2G'][name].dl_bytes_500k / 1024 / 1024;
+                            //dataThroughPut2G = dataThroughPut2GUl + dataThroughPut2GDl;
+                            http_display_succrate2G = objectData[i]['2G'][name].http_display_succrate;
+                        }
+                        continue;
+                    }
+                }
+                array2G.push(parseInt(http_display_succrate2G * 10000) / 100);
+                array3G.push(parseInt(http_display_succrate3G * 10000) / 100);
+                array4G.push(parseInt(http_display_succrate4G * 10000) / 100);
+                //alert(array4G[i]);
+                var time = objectData[i].time.substring(11, 16);
+                timeData.push(time);
+                continue;
+            }
+        }
+
+        require(
+                [
+                    'echarts',
+                    'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                ],
+                function (ec) {
+                    // 基于准备好的dom，初始化echarts图表
+                    var myChart = ec.init(document.getElementById('popupContent'));
+
+                    option = {
+                        title : {
+                            text: strIndexName+infoName +"  Http显示成功率"+ "历史趋势图"
+                        },
+                        tooltip : {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            data:['4G成功率','3G成功率','2G成功率']
+                        },
+                        calculable : true,
+                        xAxis : [
+                            {
+                                type : 'category',
+                                boundaryGap : false,
+                                name:'时间',
+                                data : timeData
+                            }
+                        ],
+                        yAxis : [
+                            {
+                                type : 'value',
+                                name:'%',
+                                axisLabel : {
+                                    formatter: '{value}'
+                                }
+                            }
+                        ],
+                        series : [
+                            {
+                                name:'4G成功率',
+                                type:'line',
+                                data:array4G
+                            },
+                            {
+                                name:'3G成功率',
+                                type:'line',
+                                data:array3G
+                            },
+                            {
+                                name:'2G成功率',
+                                type:'line',
+                                data:array2G
+                            }
+                        ]
+                    };
+                    // 为echarts对象加载数据,并添加单击响应事件
+                    myChart.setOption(option,true);
+                }
+        );
+        $('#divWhoise').hide();
+    });
+    //*/
+    $.getJSON("http://" + baseUrl + ":8080/stream/ue/http/site-majors-times?site="  + encodeURIComponent(indexName) + "&timeBegin=" + timeStart+ "&timeEnd=" + timeEnd,function(data){
+        for(var name in data) {
+            if (name === infoName) {
+                $('#divWhoise').show();
+                var objectData = data[name];
+                var lengthData = objectData.length;
+                //alert(lengthData);
+                var array2G = [];
+                var array3G = [];
+                var array4G = [];
+                var timeData = [];
+                for (var i = 0; i < lengthData; i++) {
+                    var http_display_succrate2G = objectData[i]['2GHTTP成功率'];
+                    var http_display_succrate3G = objectData[i]['3GHTTP成功率'];
+                    var http_display_succrate4G = objectData[i]['4GHTTP成功率'];
+                    array2G.push(parseInt(http_display_succrate2G * 10000) / 100);
+                    array3G.push(parseInt(http_display_succrate3G * 10000) / 100);
+                    array4G.push(parseInt(http_display_succrate4G * 10000) / 100);
+                    //alert(array4G[i]);
+                    var time = objectData[i].time.substring(11, 16);
+                    timeData.push(time);
+                }
+            }
+        }
+        require(
+                [
+                    'echarts',
+                    'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                ],
+                function (ec) {
+                    // 基于准备好的dom，初始化echarts图表
+                    var myChart = ec.init(document.getElementById('popupContent'));
+
+                    option = {
+                        title : {
+                            text: strIndexName+infoName +"  Http显示成功率"+ "历史趋势图"
+                        },
+                        tooltip : {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            y: 'top',
+                            x:'right',
+                            data:['4G成功率','3G成功率','2G成功率']
+                        },
+                        calculable : true,
+                        xAxis : [
+                            {
+                                type : 'category',
+                                boundaryGap : false,
+                                name:'时间',
+                                data : timeData
+                            }
+                        ],
+                        yAxis : [
+                            {
+                                type : 'value',
+                                name:'成功率(%)',
+                                axisLabel : {
+                                    formatter: '{value}'
+                                }
+                            }
+                        ],
+                        series : [
+                            {
+                                name:'4G成功率',
+                                type:'line',
+                                data:array4G
+                            },
+                            {
+                                name:'3G成功率',
+                                type:'line',
+                                data:array3G
+                            },
+                            {
+                                name:'2G成功率',
+                                type:'line',
+                                data:array2G
+                            }
+                        ]
+                    };
+                    // 为echarts对象加载数据,并添加单击响应事件
+                    myChart.setOption(option,true);
+                }
+        );
+        $('#divWhoise').hide();
+    });
+</script>
+</body>

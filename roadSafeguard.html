@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>道路保障</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="renderer" content="webkit">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="css/easyui.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/leaflet.draw.css" />
+    <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
+    <link rel="stylesheet" href="css/leaflet.markercluster.css" />
+    <link rel="stylesheet" href="css/leaflet-search.css" />
+    <link rel="stylesheet" href="css/Icon.Label.css" />
+    <link rel="stylesheet" href="css/leaflet.groupedlayercontrol.css" />
+    <!--link rel="stylesheet" href="css/L.Control.Zoomslider.css" /-->
+    <link rel="stylesheet" href="css/road-safeguard.css" />
+    <style>
+        #map{ position: absolute; top:0; bottom:0; right: 0px; left:0; }
+        #infoLocation{position: absolute; left: 10px;  bottom: 10px;}
+        #loading{visibility: hidden; position: absolute; background: none; top: 42%; left: 50%; width: 100px; height: 100px;}
+        #allIndexShow{
+            position: absolute;
+            right: 0px;
+            height: 100%;
+            width: 430px;
+            background: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: none;
+        }
+        #userData{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 200px;
+            right: 10px;
+            width: 400px;
+            border: 2px solid #252c34;
+        }
+        #dataThroughPut{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 200px;
+            right: 10px;
+            width: 400px;
+            top: 210px;
+            border: 2px solid #252c34;
+        }
+        #hotTerminal{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 200px;
+            right: 10px;
+            width: 400px;
+            top: 420px;
+            border: 2px solid #252c34;
+        }
+        #hotApp{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 230px;
+            right: 10px;
+            width: 400px;
+            top: 630px;
+            border: 2px solid #252c34;
+        }
+        #netQuality{
+            background-color: #252c34;
+            opacity: 0.9;
+            position: absolute;
+            height: 200px;
+            right: 10px;
+            width: 400px;
+            top: 870px;
+            border: 2px solid #252c34;
+        }
+        .custom-detailed-info{margin-top: 10px; text-align: center;}
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:0px;
+            background: #252c34 ;
+            outline: none;
+            color: white;
+            font-size: 20px;
+            font-family: Microsoft YaHei;
+        }
+        .custom-title-wx{border-bottom: 1px solid cornflowerblue; width: 100%; height: 40px;}
+        .custom-button-left{position: absolute; left: 30px; width: 100px;}
+        .custom-button-right{position: absolute; left: 190px; width: 100px;}
+        .navbar-header{margin-top: 1px; text-align: center; border: 1px solid gray; background-color: gainsboro;}
+        .custom-info-device{margin-top: 16px;}
+        .custom-text-width{width: 60%;}
+        .leaflet-control-layers-selector {top: -2px;}
+        .leaflet-control-layers-group-selector{height: 20px;}
+        .leaflet-control-layers-group-name{font-size: 1.2em; color: cornflowerblue; text-align: match-parent;}
+        .leaflet-control-scale-line{text-align: center;}
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip{background-color: #252c34; color: white;}
+        .sweet-deal-label {
+            background-color: rgba(255, 255, 255, 0.001);
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            color: #000000;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 9999;
+        }
+        .img-preview{
+            -moz-border-bottom-colors: none;
+            -moz-border-left-colors: none;
+            -moz-border-right-colors: none;
+            -moz-border-top-colors: none;
+            border-bottom-color: #B8B8B8;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            border-bottom-style: solid;
+            border-bottom-width: 1px;
+            border-image-outset: 0 0 0 0;
+            border-image-repeat: stretch stretch;
+            border-image-slice: 100% 100% 100% 100%;
+            border-image-source: none;
+            border-image-width: 1 1 1 1;
+            border-left-color-ltr-source: physical;
+            border-left-color-rtl-source: physical;
+            border-left-color-value: #B8B8B8;
+            border-left-style-ltr-source: physical;
+            border-left-style-rtl-source: physical;
+            border-left-style-value: solid;
+            border-left-width-ltr-source: physical;
+            border-left-width-rtl-source: physical;
+            border-left-width-value: 1px;
+            border-right-color-ltr-source: physical;
+            border-right-color-rtl-source: physical;
+            border-right-color-value: #B8B8B8;
+            border-right-style-ltr-source: physical;
+            border-right-style-rtl-source: physical;
+            border-right-style-value: solid;
+            border-right-width-ltr-source: physical;
+            border-right-width-rtl-source: physical;
+            border-right-width-value: 1px;
+            border-top-color: #B8B8B8;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            border-top-style: solid;
+            border-top-width: 1px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+            float: left;
+        }
+        span.expressway_txt{cursor: pointer;}
+        td.t1{cursor: pointer;}
+        td.t2{cursor: pointer;}
+        #gaosuDetailed .t1 span{
+            color: #669dcd;
+        }
+        #sycsDetailed .t1 span{
+            color: #3cbbbf;
+        }
+        #ywcsDetailed .t1 span{
+            color: #e1ab3e;
+        }
+        #simDetailed .t1 span{
+            color: #8c56b3;
+        }
+        #sfzDetailed .t1 span{
+            color: #e65050;
+        }
+    </style>
+    <script>
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    </script>
+    <script src="scripts/jquery-1.9.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/jquery.easyui.min.js"></script>
+    <script src="scripts/leaflet.js"></script>
+    <script src="scripts/heatmap.js"></script>
+    <script src="scripts/leaflet-heatmap.js"></script>
+    <script src="scripts/leaflet.draw.js"></script>
+    <script src="scripts/leaflet.contextmenu.js"></script>
+    <script src="scripts/leaflet.markercluster-src.js"></script>
+    <script src="scripts/leaflet-search.js"></script>
+    <script src="scripts/Icon.Label.js"></script>
+    <script src="scripts/leaflet.groupedlayercontrol.js"></script>
+    <!--script src="scripts/L.Control.Zoomslider.js"></script-->
+    <script src="scripts/Semicircle.js"></script>
+    <script src="scripts/leaflet.baidu.min.js"></script>
+    <script src="scripts/testData.js"></script>
+    <script src="scripts/roadSafeguard.js"></script>
+    <script>
+        //地铁线
+        var subway1 = new L.featureGroup(),
+                subway2 = new L.featureGroup(),
+                subway3 = new L.featureGroup(),
+                subway4 = new L.featureGroup(),
+                subway5 = new L.featureGroup(),
+                subway6 = new L.featureGroup(),
+                subway7 = new L.featureGroup(),
+                subway8 = new L.featureGroup(),
+                subway9 = new L.featureGroup(),
+                subway10 = new L.featureGroup(),
+                subway11 = new L.featureGroup();
+        //高架桥
+        var roadNH = new L.featureGroup(),
+                roadWH = new L.featureGroup(),
+                roadZH = new L.featureGroup(),
+                roadYA = new L.featureGroup(),
+                roadNB= new L.featureGroup();
+    </script>
+</head>
+    <body>
+        <div id="map"></div>
+        <div class="map_left"style="height:580px;padding:10px 0;background:#252c34;overflow-x:hidden; overflow-y: auto; visibility: hidden;">
+            <div name="left_tab" id="tab1" style="position: absolute; margin-top: 0; height: 53%; width: 100%;">
+                <div class="expressway_title">
+                    <div class="e_trapezoid">
+                        <div class="L_title">
+                            <i class="icon icon-traffic"></i>
+                            <span class="expressway_txt">高架</span>
+                            <span class="title_time">(10:00)</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="jtsn" class="norm_center">
+                    <div class="custom-index-wx">
+                        <div class="custom-index-info-left-wx">
+                            <h3> 用户数&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;万</h3>
+                        </div>
+                        <div class="custom-index-info-right-wx">
+                            <h3> 流量&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;GB</h3>
+                        </div>
+                        <div class="circle_line">
+                            <div class="Mline1-box">
+                                <div class="line-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="jtsnDetailed" class="custom-detailed-wx" style="overflow:auto">
+                    <div class="norm_table">
+                        <table width="100%" border="0">
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>南北</span>高架</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>延安路</span>高架</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>内环</span>高架</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>中环</span>高架</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>外环</span>高架</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>上海港</span>国际客运中心</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div name="left_tab" id="tab2" style="position: absolute; margin-top: 57%; height: 53%; width: 100%;">
+                <div class="expressway_title2">
+                    <div class="e_trapezoid2">
+                        <div class="L_title">
+                            <i class="icon icon-expressway"></i>
+                            <span class="expressway_txt">高速</span>
+                            <span class="title_time">(10:00)</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="gaosu" class="norm_center">
+                    <div class="custom-index-wx">
+                        <div class="custom-index-info-left-wx">
+                            <h3> 用户数&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;万</h3>
+                        </div>
+                        <div class="custom-index-info-right-wx">
+                            <h3> 流量&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;GB</h3>
+                        </div>
+                        <div class="circle_line">
+                            <div class="Mline1-box">
+                                <div class="line-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="gaosuDetailed" class="custom-detailed-wx" style="display:none;overflow:auto">
+                    <div class="norm_table">
+                        <table width="100%" border="0">
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>沪金</span>高速公路</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>沪渝</span>高速</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>沪昆</span>高速</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>沈海</span>高速</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>上海</span>绕城高速</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>沪常</span>高速</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>京沪</span>高速</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>沪陕</span>高速</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div  name="left_tab" id="tab3" style="position: absolute; margin-top: 79%; height: 53%; width: 100%;">
+                <div class="expressway_title3">
+                    <div class="e_trapezoid3">
+                        <div class="L_title">
+                            <i class="icon icon-market"></i>
+                            <span class="expressway_txt">商业场所</span>
+                            <span class="title_time">(10:00)</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="sycs" class="norm_center">
+                    <div class="custom-index-wx">
+                        <div class="custom-index-info-left-wx">
+                            <h3> 用户数&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;万</h3>
+                        </div>
+                        <div class="custom-index-info-right-wx">
+                            <h3> 流量&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;GB</h3>
+                        </div>
+                        <div class="circle_line">
+                            <div class="Mline1-box">
+                                <div class="line-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="sycsDetailed" class="custom-detailed-wx" style="display:none;overflow:auto">
+                    <div class="norm_table">
+                        <table width="100%" border="0">
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>淮海路</span>商圈</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>五角场</span>商圈</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>大悦城</span></td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>虹口</span>龙之梦</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>大宁</span>商圈</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>中山</span>公园商圈</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>西郊</span>百联</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>静安</span>嘉里中心</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <div name="left_tab" id="tab4" style="position: absolute; margin-top: 101%; height: 53%; width: 100%;">
+                <div class="expressway_title4">
+                    <div class="e_trapezoid4">
+                        <div class="L_title">
+                            <i class="icon icon-Amusement"></i>
+                            <span class="expressway_txt">游玩场所</span>
+                            <span class="title_time">(10:00)</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="ywcs" class="norm_center">
+                    <div class="custom-index-wx">
+                        <div class="custom-index-info-left-wx">
+                            <h3> 用户数&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;万</h3>
+                        </div>
+                        <div class="custom-index-info-right-wx">
+                            <h3> 流量&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;GB</h3>
+                        </div>
+                        <div class="circle_line">
+                            <div class="Mline1-box">
+                                <div class="line-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="ywcsDetailed" class="custom-detailed-wx" style="display:none;overflow:auto">
+                    <div class="norm_table">
+                        <table width="100%" border="0">
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>外滩</span></td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>上海</span>豫园</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>前卫</span>生态村</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>美兰湖</span></td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>上海</span>大观园</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>东方</span>绿舟</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>朱家角</span>古镇</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>锦江</span>乐园</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>老外街</span></td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>上海</span>方塔园</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <div name="left_tab" id="tab5" style="position: absolute; margin-top: 123%; height: 53%; width: 100%;">
+                <div class="expressway_title5">
+                    <div class="e_trapezoid5">
+                        <div class="L_title">
+                            <i class="icon icon-sm"></i>
+                            <span class="expressway_txt">交通枢纽</span>
+                            <span class="title_time">(10:00)</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="sim" class="norm_center">
+                    <div class="custom-index-wx">
+                        <div class="custom-index-info-left-wx">
+                            <h3> 用户数&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;万</h3>
+                        </div>
+                        <div class="custom-index-info-right-wx">
+                            <h3> 流量&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;GB</h3>
+                        </div>
+                        <div class="circle_line" >
+                            <div class="Mline1-box">
+                                <div class="line-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="simDetailed" class="custom-detailed-wx" style="display:none;overflow:auto">
+                    <div class="norm_table">
+                        <table width="100%" border="0">
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>龙华</span>寺</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>静安</span>寺</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>沉香</span>阁</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>法善</span>庵</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>法华</span>学问寺</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>龙音</span>寺</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>玉佛</span>寺</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>福缘</span>禅院</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>太平</span>禅寺</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>甘露</span>庵</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <div name="left_tab" id="tab6" style="position: absolute; margin-top: 145%; height: 53%; width: 100%;">
+                <div class="expressway_title6">
+                    <div class="e_trapezoid6">
+                        <div class="L_title">
+                            <i class="icon icon-sfz"></i>
+                            <span class="expressway_txt">收费站</span>
+                            <span class="title_time">(10:00)</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="sfz" class="norm_center">
+                    <div class="custom-index-wx">
+                        <div class="custom-index-info-left-wx">
+                            <h3> 用户数&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;万</h3>
+                        </div>
+                        <div class="custom-index-info-right-wx">
+                            <h3> 流量&nbsp;&nbsp;<b>123</b>&nbsp;&nbsp;GB</h3>
+                        </div>
+                        <div class="circle_line" >
+                            <div class="Mline1-box">
+                                <div class="line-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="sfzDetailed" class="custom-detailed-wx" style="display:none;overflow:auto">
+                    <div class="norm_table">
+                        <table width="100%" border="0">
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>新浜</span>收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>泖港</span>收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>亭林</span>收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>松江</span>收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>马陆</span>收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>莘砖</span>公路收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>叶新</span>公路收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>亭枫</span>公路收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>曹安</span>公路收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>宝安</span>公路收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+                            <tr>
+                                <td class="t1"><span>朱枫</span>公路收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                                <td class="t1"><span>兴塔</span>收费站</td>
+                                <td class="t2"><span>7.90</span>&nbsp;万</td>
+                            </tr>
+
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+		<div id="infoLocation"></div>
+        <div id="loading"></div>
+        <div id="allIndexShow" class="img-preview">
+            <div id="userData" class="img-preview"></div>
+            <div id="dataThroughPut" class="img-preview"></div>
+            <div id="hotTerminal" class="img-preview"></div>
+            <div id="hotApp" class="img-preview"></div>
+            <div id="netQuality" class="img-preview"></div>
+        </div>
+        <div id="win"  style="visibility: hidden;"></div>
+        <script>
+            //地图相关定义
+            var map;
+            var switchControl;
+            var baseLayer,
+                    normalLayer,
+                    roadLayer,
+                    satelliteLayer;
+            var markersLayer = new L.featureGroup();//普通小区图层
+            var polygonLayer = new L.featureGroup();//热点区域多边形图层
+            var sectorLayer = new L.featureGroup();//扇形小区图层
+            var labelLayer = new L.featureGroup();//标注图层
+            var districtsLayer = new L.featureGroup();//框选查询及搜索查询到的小区
+            var temLayer = new L.featureGroup();//超链接点击时的单个小区图层
+            var rasterLayer = new L.featureGroup();//网格图层
+            var markerClusters = L.markerClusterGroup({chunkedLoading: true, maxClusterRadius: 100 });//MarkerClusters
+            var heatMapLayer;//热力图
+            //指标相关定义
+            var heatIndexDis = '迪士尼';//初始化热点区域，动态改变
+            var radiusHeatMap = 0.004;//热力图渲染半径，动态改变
+            var cacheHeatMapData = [];//缓存热力图数据
+            var lastZoomLevel = 13;//上次地图层级
+            var detailedInfoVector = [];//缓存小区数据
+            //var maxPosHeatMap = [31.94256,122.104797],//热力图渲染区域最大最小坐标
+            //        minPosHeatMap = [30.61350,120.92651];
+            var heatFlag = true; //控制热力图是否选中
+            //初始化函数入口
+			window.onload = initAll();
+            $(function(){
+                initCls();
+                //initClickEvents();
+                initBaiduMap();
+                addMedianCycleRoad();
+            });
+            function initAll(){
+                //getDetailedInfo();
+                //addDynamicMenu(testData);
+                //addXQ2Map(heatIndexDis);
+                //addWangGe();
+                //addMedianCycleRoad();
+                //addSubway();
+                addPosNBGJ('南北高架',heatFlag);
+                //showAllIndexInfo(heatIndexDis);
+                //addImportantData();
+                //addDetailedImportantData();
+            }
+            function initClickEvents(){
+                $('tr td.t1').on('click',function(){
+                    refreshFlag = true;
+                    var temStr = $(this).html();
+                    temStr = temStr.replace('<span>','');
+                    temStr = temStr.replace('</span>','');
+                    //locate2Target(heatIndexDis);
+                    heatIndexDis = temStr;
+                    addXQ2Map(heatIndexDis,true);
+                    //showAllIndexInfo(heatIndexDis);
+                });
+                $('.expressway_txt').on('click',function(){
+                    refreshFlag = false;
+                    heatIndexDis = this.innerHTML;
+                    addXQ2Map(heatIndexDis,false);
+                    //showAllIndexInfo(heatIndexDis);
+                    locate2Target(heatIndexDis);
+                });
+            }
+            setInterval(function(){
+                initAll();
+            },1000*60*5);
+        </script>
+    </body>
+</html>

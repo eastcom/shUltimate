@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>迪斯尼保障</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="renderer" content="webkit">
+        <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+        <link rel="stylesheet" href="css/easyui.css" />
+        <link rel="stylesheet" href="css/leaflet.css" />
+        <link rel="stylesheet" href="css/leaflet.draw.css" />
+        <link rel="stylesheet" href="css/leaflet.markercluster.css" />
+        <style>
+            body{ margin:0; padding:0; font-family: "Microsoft YaHei";}
+            h5{display: inline;}
+            h4{line-height: 10px;}
+            h3{margin-top: 0px; background-color: darkcyan; border: 2px solid gray;}
+            .collapse span{font-family: "Microsoft YaHei"; display: block;}
+            div a{font-family: "Microsoft YaHei"; font-size: 24px;}
+            #map{ position: absolute; top:0; bottom:0; right: 300px; left:0; z-index: -1;}
+            #infoLocation{position: absolute; left: 10px;  bottom: 10px;}
+            #loading{visibility: hidden; position: absolute; background: none; top: 42%; left: 50%; width: 100px; height: 100px;}
+            #infoAll{position: absolute; right: 0px; top: 0px; bottom: 0px; width: 300px; background-color: #252c34;}
+            #topXQ{position: absolute; top: 10px; width: 99%; height: 40%; border: none;}
+            #topCG{position: absolute; top: 50%; width: 99%; height: 40%; border: none;}
+            #nameXQ{position: absolute; left: 2px; width: 48%; height: 100%; cursor: pointer;}
+            #valueXQ{position: absolute; left: 50%; width: 48%; height: 100%;}
+            #nameCG{position: absolute; left: 2px; width: 48%; height: 100%; cursor: pointer;}
+            #valueCG{position: absolute; left: 50%; width: 48%; height: 100%;}
+            #infoAll div{font-family: "Microsoft YaHei"; font-size: 18px; color: white;}
+            #infoAll div a{font-family: "Microsoft YaHei"; font-size: 18px; color: white;}
+            #showIndex{position:absolute; visibility: visible; left: 0px; width:40px;top: 290px; bottom: 100px}
+            #hideIndex{position:absolute; visibility: hidden; overflow: hidden; left: 490px; width:40px; top: 290px; bottom: 100px;}
+            #indexSelect{
+                border: 1px solid darkgray;
+                background: #F5FFFA;
+                position: absolute;
+                visibility: hidden;
+                overflow-x: hidden;
+                overflow-y: auto;
+                left: 10px;
+                width: 480px;
+                top: 10%;
+                bottom: 6%;
+            }
+            #indexSelect a{font-family: "Microsoft YaHei"; font-size: 16px;}
+            .custom-detailed-info{margin-top: 10px; text-align: center;}
+            .button{
+                border: none;
+                cursor: pointer;
+                height: 30px;
+                margin-left:0px;
+                background: #252c34 ;
+                outline: none;
+                color: white;
+                font-size: 20px;
+                font-family: Microsoft YaHei;
+            }
+            .custom-title-wx{border-bottom: 1px solid cornflowerblue; width: 100%; height: 40px;}
+            .custom-button-left{position: absolute; left: 30px; width: 100px;}
+            .custom-button-right{position: absolute; left: 190px; width: 100px;}
+            .navbar-header{margin-top: 1px; text-align: center; border: 1px solid gray; background-color: gainsboro;}
+            .custom-info-device{margin-top: 16px;}
+            .custom-text-width{width: 60%;}
+            .leaflet-control-layers-selector {top: -2px;}
+            .leaflet-control-scale-line{text-align: center;}
+            .sweet-deal-label {
+                background-color: rgba(255, 255, 255, 0.001);
+                -moz-box-shadow: none;
+                -webkit-box-shadow: none;
+                box-shadow: none;
+                color: #000000;
+                font-weight: bold;
+                font-size: 14px;
+            }
+        </style>
+        <script>
+            var baseUrl = '10.221.247.7';
+            var locationUrl = window.location.href;
+            locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+        </script>
+        <script src="scripts/jquery-1.9.1.min.js"></script>
+        <script src="bootstrap/js/bootstrap.min.js"></script>
+        <script src="scripts/jquery.easyui.min.js"></script>
+        <script src="scripts/leaflet.js"></script>
+        <script src="scripts/heatmap.js"></script>
+        <script src="scripts/leaflet-heatmap.js"></script>
+        <script src="scripts/leaflet.draw.js"></script>
+        <script src="scripts/leaflet.markercluster-src.js"></script>
+        <script src="scripts/Semicircle.js"></script>
+        <script src="scripts/leaflet.baidu.min.js"></script>
+        <script src="scripts/testData.js"></script>
+        <script src="scripts/initMapOriginDSN.js"></script>
+    </head>
+    <body>
+        <div id="map"></div> 
+		<div id="infoLocation"></div>
+        <div id="loading"></div>
+        <div id="infoAll">
+            <div id="topXQ">
+                <div class="custom-title-wx">
+                    <input type="button"  class="button custom-button-left" value="TOP小区" align="middle" />
+                    <input type="button"  class="button custom-button-right" value="客流" align="middle" />
+                </div>
+                <div class="custom-detailed-info">
+                    <div id="nameXQ"></div>
+                    <div id="valueXQ"></div>
+                </div>
+            </div>
+            <div id="topCG">
+                <div class="custom-title-wx">
+                    <input type="button"  class="button custom-button-left" value="TOP场馆" align="middle" />
+                    <input type="button"  class="button custom-button-right" value="客流" align="middle" />
+                </div>
+                <div class="custom-detailed-info">
+                    <div id="nameCG"></div>
+                    <div id="valueCG"></div>
+                </div>
+            </div>
+        </div>
+        <div id="showIndex">
+            <input type="image" src="images/show.png" title="显示" onclick="showIndexDiv()"/>
+        </div>
+        <div id="hideIndex">
+            <input type="image" src="images/hide.png" title="隐藏" onclick="hideIndexDIV()"/>
+        </div>
+        <div id="indexSelect">
+            <div class="tabbable tabs-left">
+                <ul id="dynamicMenu" class="nav nav-tabs"></ul>
+                <div id="secondMenu" class="tab-content"></div>
+            </div>
+        </div>
+        <div id="win"  style="visibility: hidden;"></div>
+        <script>
+            //地图相关定义
+            var map;
+            var switchControl;
+            var baseLayer,
+                    normalLayer,
+                    roadLayer,
+                    satelliteLayer;
+            var markersLayer = new L.featureGroup();//普通小区图层
+            var polygonLayer = new L.featureGroup();//热点区域多边形图层
+            var sectorLayer = new L.featureGroup();//扇形小区图层
+            var labelLayer = new L.featureGroup();//标注图层
+            var districtsLayer = new L.featureGroup();//框选查询到的小区
+            var temLayer = new L.featureGroup();//超链接点击时的单个小区图层
+            var rasterLayer = new L.featureGroup();//网格图层
+            var markerClusters = L.markerClusterGroup({chunkedLoading: true, maxClusterRadius: 100 });//MarkerClusters
+            var heatMapLayer;//热力图
+            //指标相关定义
+            var heatIndexDis = '2015-外滩';//初始化热点区域，动态改变
+            var radiusHeatMap = 0.004;//热力图渲染半径，动态改变
+            var cacheHeatMapData = [];//缓存热力图数据
+            var lastZoomLevel = 13;//上次地图层级
+            var detailedInfoVector = [];//缓存小区数据
+
+			window.onload = initBaiduMap();
+            getDetailedInfo();
+            addDynamicMenu(testData);
+            //addXQ2Map(heatIndexDis);
+            //addWangGe();
+        </script>
+    </body>
+</html>

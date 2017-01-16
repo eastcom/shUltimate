@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        body{border: none;}
+        b{font-family:Microsoft YaHei; color:#ffffff;  text-align: center; line-height:26px; text-align: center; alignment:left; height:26px;font-size:18px; font-weight:bold;}
+        #detailedInfo{width: 840px; height: 440px; background-color: #252c34; margin-top: -30px; border: none;}
+        #infoAll{width: 860px; height: 460px; background-color: #252c34; border: none;  background: url("trendPlots/images/maxBig.png") no-repeat;}
+        #title{
+            border-bottom: 2px solid lightseagreen;
+            width: 100%;
+        }
+        #loading{visibility: hidden; position: absolute; background: none; top: 50%; left: 50%; width: 100px; height: 100px;}
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:10px;
+            background: #FFFFFF ;
+            outline: none;
+        }
+    </style>
+    <script src="../scripts/jquery-1.9.1.min.js"></script>
+    <script src="../echarts/build/dist/echarts.js"></script>
+</head>
+<body>
+<div id="infoAll">
+    <img src="trendPlots/images/closePlot.png" style="z-index: 99; position: absolute; right: 50px; top: 25px; width: 16px; height: 16px; cursor: pointer;" title="关闭" onclick="closeTrendPlotParent()"/>
+    <img src="trendPlots/images/maxim2.png" style="z-index: 99; position: absolute; right: 70px; top: 25px; width: 16px; height: 16px; " title="最大化" />
+    <img src="trendPlots/images/returnNormal.png" style="z-index: 99; position: absolute; right: 90px; top: 25px; width: 16px; height: 16px; cursor: pointer;" title="还原" onclick="normalTrendPlotParent()"/>
+    <div id="title" >
+        <table>
+            <tr>
+                <td><img src="images/icon6.png" style="width: 32px; height: 32px; margin-left: 40px;"/></td>
+                <td><b id="disTitle" style="font-size: 26px;">用户数</b></td>                
+            </tr>
+        </table>
+    </div>
+    <div id="detailedInfo"></div>
+    <div id="curVal" style="position: absolute; right: 0px; top: 60px; width: 400px; height: 30px; font-size: 26px; color: #ffffff">当前值</div>
+</div>
+<div id="loading"></div>
+<script>
+    var baseUrl = '10.221.247.7';
+    var locationUrl = window.location.href;
+    locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    //console.log(locationUrl)
+    // ECharts路径配置
+    require.config({
+        paths: {
+            echarts: '../echarts/build/dist'
+        }
+    });
+    function callServer1(str){
+        var timeBegin = getCurrentTimeHour(1),
+                timeEnd = getCurrentTimeMin(5);
+        var userUrl = 'http://' + baseUrl + ':8080/stream/totalnum/hotspots?timeBegin=' + timeBegin + '&timeEnd=' + timeEnd + '&hotspot=' + encodeURIComponent(str);
+        //console.log(userUrl);
+        $.ajax({
+            url: userUrl,
+            type: 'get',
+            dataType: 'json',
+            data: {},
+            beforeSend: function(XMLHttpRequest){
+                document.getElementById('loading').style.visibility = 'visible';
+                $('#loading').html("<img src='../images/loader1.gif' />");
+            },
+            complete: function(XMLHttpRequest,textStatus){
+                document.getElementById('loading').style.visibility = 'hidden';
+                $('#loading').empty();
+            }
+        })
+                .done(function(data){
+                    var objectData = data[str];
+                    var lengthData = objectData.length;
+                    var array2G =[];
+                    var array3G =[];
+                    var array4G =[];
+                    var arrayAll = [];
+                    var timeData =[];
+                    for (var i=0; i<lengthData;i++){
+                        array2G.push((objectData[i]['2G']/10000).toFixed(2));
+                        array3G.push((objectData[i]['3G']/10000).toFixed(2));
+                        array4G.push((objectData[i]['4G']/10000).toFixed(2));
+                        var temAll = objectData[i]['2G'] + objectData[i]['3G'] + objectData[i]['4G'];
+                        arrayAll.push((temAll/10000).toFixed(2));
+                        var time = objectData[i].time.substring(11,16);
+                        timeData.push(time);
+                    }
+                    require(
+                            [
+                                'echarts',
+                                'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                            ],
+                            function (ec) {
+                                // 基于准备好的dom，初始化echarts图表
+                                var myChart = ec.init(document.getElementById('detailedInfo'));
+
+                                var option = {
+                                    title : {
+                                        x: 'center',
+                                        textStyle: {
+                                            fontSize: 30,
+                                            color: '#ffffff'
+                                        }
+                                        //text: str + ' 用户数'
+                                    },
+                                    axis: {
+                                        splitNumber: 3,
+                                                axisLabel: {
+                                            textStyle: {
+                                                color: '#ffffff'
+                                            }
+                                        }
+                                    },
+                                    tooltip : {
+                                        trigger: 'axis'
+                                    },
+                                    legend: {
+                                        data: ['总用户','4G用户','3G用户','2G用户'],
+                                        textStyle: {
+                                            fontSize: 24,
+                                            color: '#ffffff'
+                                        },
+                                        y: 'bottom',
+                                        x: 'center'
+                                    },
+                                    calculable : true,
+                                    grid: {
+                                        x: '8%',
+                                        width: '90%',
+                                        borderWidth: 0
+                                        //backgroundColor: '#252c34'
+                                    },
+                                    xAxis : [
+                                        {
+                                            type: 'category',
+                                            axisLabel: {
+                                                textStyle: {
+                                                    fontSize: 20,
+                                                    color: '#ffffff'
+                                                }
+                                            },
+                                            boundaryGap: false,
+                                            name: '',
+                                            splitLine: {
+                                                show: true,
+                                                lineStyle: {
+                                                    color: ['#003250'],
+                                                    width: 1,
+                                                    type: 'solid'
+                                                }
+                                            },
+                                            data : timeData
+                                        }
+                                    ],
+                                    yAxis : [
+                                        {
+                                            type : 'value',
+                                            splitNumber: 3,
+                                            axisLabel: {
+                                                textStyle: {
+                                                    fontSize: 20,
+                                                    color: '#ffffff'
+                                                }
+                                            },
+                                            nameTextStyle: {
+                                                fontSize: 20,
+                                                color: '#00fcff'
+                                            },
+                                            name: '用户数(万)',
+                                            splitLine: {
+                                                show: true,
+                                                lineStyle: {
+                                                    color: ['#003250'],
+                                                    width: 1,
+                                                    type: 'solid'
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    series : [
+                                        {
+                                            itemStyle:{
+                                                normal: {color:'#fc018f'}
+                                            },
+                                            name: '总用户',
+                                            type: 'line',
+                                            data: arrayAll
+                                        },
+                                        {
+                                            itemStyle:{
+                                                normal: {color:'#66f2ff  '}
+                                            },
+                                            name: '4G用户',
+                                            type: 'line',
+                                            data: array4G
+                                        },
+                                        {
+                                            itemStyle:{
+                                                normal: {color:'#00f859  '}
+                                            },
+                                            name: '3G用户',
+                                            type: 'line',
+                                            data: array3G
+                                        },
+                                        {
+                                            itemStyle:{
+                                                normal: {color:'#fff000'}
+                                            },
+                                            name: '2G用户',
+                                            type: 'line',
+                                            data: array2G
+                                        }
+                                    ]
+                                };
+                                // 为echarts对象加载数据,并添加单击响应事件
+                                myChart.setOption(option,true);
+                            }
+                    );
+                });
+    }
+    function callServer(str){
+        var timeBegin = getCurrentTimeHour(1),
+                timeEnd = getCurrentTimeMin(5);
+        var userUrl = 'http://' + baseUrl + ':8080/stream/ue/quality/hotspot-times?timeBegin=' + timeBegin + '&timeEnd=' +timeEnd + '&hotspot=' + encodeURIComponent(str);
+        //console.log(userUrl);
+        $.ajax({
+            url: userUrl,
+            type: 'get',
+            dataType: 'json',
+            data: {},
+            beforeSend: function(XMLHttpRequest){
+                document.getElementById('loading').style.visibility = 'visible';
+                $('#loading').html("<img src='../images/loader1.gif' />");
+            },
+            complete: function(XMLHttpRequest,textStatus){
+                document.getElementById('loading').style.visibility = 'hidden';
+                $('#loading').empty();
+            }
+        })
+                .done(function(data){
+                    //console.log(data);
+                    var index1 = '4G承载成功率',
+                            index2 = '4G附着成功率',
+                            index3 = 'HTTP时延',
+                            index4 = 'HTTP下行速率500k';
+                            //index5 = '4G下行速率500k';
+                    var timeData = [],
+                            cgl4G = [],
+                            sy4G = [];
+                    for(var i= 0,lenI=data.length; i<lenI; ++i){
+                        var targetObj = data[i];
+                        timeData.push(targetObj.time.substring(11,16));
+                        cgl4G.push((parseInt(targetObj[index4] * 100)/100/1024).toFixed(2));
+                        sy4G.push((parseInt(targetObj[index3] * 100)/100).toFixed(2));
+                    }
+                    //console.log(cgl4G);
+                    require(
+                            [
+                                'echarts',
+                                'echarts/chart/bar',
+                                'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+                            ],
+                            function (ec) {
+                                // 基于准备好的dom，初始化echarts图表
+                                var myChart = ec.init(document.getElementById('detailedInfo'));
+                                var option = {
+                                    title : {
+                                        x: 'center',
+                                        textStyle: {
+                                            fontSize: 30,
+                                            color: '#ffffff'
+                                        }
+                                        //'text': str + ' 热门终端'
+                                    },
+                                    axis: {
+                                        axisLabel: {
+                                            textStyle: {
+                                                color: '#ffffff'
+                                            }
+                                        }
+                                    },
+                                    tooltip : {
+                                        formatter: function(params) {
+                                            //console.log(params);
+                                            return params[0].name + '<br/>'
+                                                    + params[0].seriesName + ' : ' + params[0].value + ' MB)<br/>'
+                                                    + params[1].seriesName + ' : ' + -params[1].value + ' (ms)';
+                                        },
+                                        'trigger':'axis'
+                                    },
+                                    legend : {
+                                        y: 'bottom',
+                                        x: 'center',
+                                        textStyle: {
+                                            fontSize: 24,
+                                            color: '#ffffff'
+                                        },
+                                        'data': ['HTTP下行速率','HTTP时延']
+                                    },
+                                    calculable : true,
+                                    grid: {
+                                        x: '10%',
+                                        width: '78%',
+                                        borderWidth: 0
+                                        //backgroundColor: '#252c34'
+                                    },
+                                    xAxis : [{
+                                        'type':'category',
+                                        axisLabel: {
+                                            textStyle: {
+                                                fontSize: 20,
+                                                color: '#ffffff'
+                                            }
+                                        },
+                                        splitLine: {
+                                            show: true,
+                                            lineStyle: {
+                                                color: ['#003250'],
+                                                width: 1,
+                                                type: 'solid'
+                                            }
+                                        },
+                                        boundaryGap : false,
+                                        axisLine: {onZero: false},
+                                        'data': timeData
+                                    }],
+                                    yAxis : [
+                                        {
+                                            'type':'value',
+                                            splitNumber: 2,
+                                            axisLabel: {
+                                                textStyle: {
+                                                    fontSize: 20,
+                                                    color: '#ffffff'
+                                                }
+                                            },
+                                            nameTextStyle: {
+                                                fontSize: 20,
+                                                color: '#00fcff'
+                                            },
+                                            //max: 100,
+                                            splitLine: {
+                                                show: true,
+                                                lineStyle: {
+                                                    color: ['#003250'],
+                                                    width: 1,
+                                                    type: 'solid'
+                                                }
+                                            },
+                                            'name':'下行速率(MB)'
+                                        },
+                                        {
+                                            'type':'value',
+                                            splitNumber: 3,
+                                            axisLabel: {
+                                                textStyle: {
+                                                    fontSize: 20,
+                                                    color: '#ffffff'
+                                                },
+                                                formatter: function(v){
+                                                    return - v;
+                                                }
+                                            },
+                                            nameTextStyle: {
+                                                fontSize: 20,
+                                                color: '#00fcff'
+                                            },
+                                            splitLine: {
+                                                show: true,
+                                                lineStyle: {
+                                                    color: ['#003250'],
+                                                    width: 1,
+                                                    type: 'solid'
+                                                }
+                                            },
+                                            inverse: true,
+                                            'name':'时延(ms)'
+                                        }
+                                    ],
+                                    series : [
+                                        {
+                                            'name':'HTTP下行速率',
+                                            'type':'line',
+                                            hoverAnimation: false,
+                                            itemStyle: {
+                                                normal: {
+                                                    color:'#00f859  '
+                                                    //areaStyle: {type: 'default'}
+                                                }
+                                            },
+                                            lineStyle: {
+                                                normal: {
+                                                    width: 1
+                                                }
+                                            },
+                                            'data': cgl4G
+                                        },
+                                        {
+                                            'name':'HTTP时延',
+                                            'type':'line',
+                                            hoverAnimation: false,
+                                            itemStyle: {
+                                                normal: {
+                                                    color:'#fff000  '
+                                                    //areaStyle: {type: 'default'}
+                                                }
+                                            },
+                                            lineStyle: {
+                                                normal: {
+                                                    width: 1
+                                                }
+                                            },
+                                            yAxisIndex: 1,
+                                            'data':  (function(){
+                                                var len = sy4G.length;
+                                                while(len--) {
+                                                    sy4G[len] *= -1;
+                                                }
+                                                return sy4G;
+                                            })()
+                                        }
+                                    ]
+                                };
+                                myChart.setOption(option,true);
+                            }
+                    );
+                });
+    }
+    function date2str(x,y) {
+        var z = {M:x.getMonth()+1,d:x.getDate(),h:x.getHours(),m:x.getMinutes(),s:x.getSeconds()};
+        y = y.replace(/(M+|d+|h+|m+|s+)/g,function(v) {return ((v.length>1?"0":"")+eval('z.'+v.slice(-1))).slice(-2)});
+        return y.replace(/(y+)/g,function(v) {return x.getFullYear().toString().slice(-v.length)});
+    }
+    //获得当前时间倒推n分钟
+    function getCurrentTimeMin(n){
+        var timeBegin = new Date();
+        //timeBegin.setHours(timeBegin.getHours()-1);
+        timeBegin.setMinutes(timeBegin.getMinutes()-n);
+        var result = date2str(timeBegin,"yyyy-MM-dd hh:mm:ss");
+        return result;
+        //var timeBeginStr = timeBegin.format("yyyy-MM-dd hh:mm:ss");
+    }
+    //获得当前时间倒推n小时
+    function getCurrentTimeHour(n){
+        var timeBegin = new Date();
+        timeBegin.setHours(timeBegin.getHours()-n);
+        //timeBegin.setMinutes(timeBegin.getMinutes()-15);
+        var result = date2str(timeBegin,"yyyy-MM-dd hh:mm:ss");
+        return result;
+        //var timeBeginStr = timeBegin.format("yyyy-MM-dd hh:mm:ss");
+    }
+    function getUrlParam(sUrl, sKey) {
+        sUrl = sUrl.split('?')[1];//截取地址之后的所有参数
+        //sUrl = sUrl.replace(/[&#]/g,'');//删除所有特殊字符
+        //console.log(sUrl)
+        if(sKey !== ''){
+            //console.log('不为空')
+            //构造正则，并截取最新的sUrl
+            var para = '(' + sKey + '=' + ')';
+            var myReg1 = new RegExp(para,'g');
+            //var myReg2 = /[A-Za-z0-9]+/g;//可以修改传中文或者数字参数
+            var myReg2 = /^([\u4E00-\u9FA5]+，?)+$/g;
+            var myReg = new RegExp(myReg1.source + myReg2.source,'g');
+            //console.log(myReg)
+            var temArray = sUrl.match(myReg);//得到的是含有参数分隔符的数组,如果只需要返回参数，则还需进行下面的转换
+            //console.log(temArray)
+            if(temArray){
+                temArray = temArray.toString().replace(myReg1,'');//删除参数分隔符sKey=,得到的是字符串
+                var result = temArray.split(',');//字符串转换为数组
+                return result;
+            }
+            else{
+                //console.log(sKey)
+                return '';//传入的参数名称sKey有错或者参数名值为空
+            }
+        }
+        if(sKey === ''){
+            //console.log('为空')
+            sUrl = sUrl.split(/[&#]/g);//以特殊字符为分隔符生成数组
+            var resultObj = {};//最后需要返回的对象
+            for(var i= 0, len = sUrl.length; i<len; ++i){
+                var temValue = sUrl[i];
+                var temArrayV = temValue.split('=');
+                resultObj[temArrayV[0]] = temArrayV[1];
+            }
+            return resultObj;
+        }
+    }
+    var nameVal = getUrlParam(locationUrl,'');
+    //console.log(nameVal.name);
+    var disName = decodeURIComponent(nameVal.name);
+    callServer(disName);
+    document.getElementById('disTitle').innerHTML = disName + '  网络质量指标';
+    function closeTrendPlotParent(){
+        window.parent.closeDivWLZLZB1();
+    }
+    function normalTrendPlotParent(){
+        var str = "pagesDSN/wlzlzb1Big.html?name=" + disName;
+        window.parent.callDivWLZLZB1Normal(str);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+/*水平居中*/
+/*文本图片等行内元素*/
+.inline-center-wx{
+	text-align: center;
+}
+/*确定宽度的块级元素*/
+.block-width-center-wx{
+	margin-left: auto; margin-right: auto;
+}
+/*不确定宽度的块级元素*/
+.block-none-width-center-wx{
+	display: inline; text-align: center;
+}
+/*竖直居中*/
+/*父元素高度不确定的块级元素、文本、图片等*/
+.vertical-none-width-center-wx{
+	padding-top: 10px; padding-bottom: 10px;
+}
+/*父元素高度确定的单行文本*/
+.vertical-width-center-wx{
+	height: 30px; line-height: 30px;
+}
+/*父元素高度确定的多行文本、图片、块级元素等，利用表格的td属性*/
+.vertical-multi-width-center-wx{
+	vertical-align: middle;
+}
+/*添加图片marker闪烁*/
+.leaflet-marker-pane{
+-webkit-animation:fadeIn .8s ease-in-out infinite;
+-moz-animation:fadeIn .8s ease-in-out infinite;
+-ms-animation:fadeIn .8s ease-in-out infinite;
+animation:fadeIn .8s ease-in-out infinite;
+}
+@-webkit-keyframes fadeIn{
+0%{opacity:0}
+100%{opacity:1}
+}
+@keyframes fadeIn{
+0%{opacity:0}
+100%{opacity:1}
+}

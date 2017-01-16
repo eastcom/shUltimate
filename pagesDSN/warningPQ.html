@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>             
+        span{display: inline; float: left; color: white; font-family: Microsoft YaHei; font-size: 20px;} 
+        b{color: #00fcff;}
+        .img-preview{
+            -moz-border-bottom-colors: none;
+            -moz-border-left-colors: none;
+            -moz-border-right-colors: none;
+            -moz-border-top-colors: none;
+            border-bottom-color: #B8B8B8;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            border-bottom-style: solid;
+            border-bottom-width: 1px;
+            border-image-outset: 0 0 0 0;
+            border-image-repeat: stretch stretch;
+            border-image-slice: 100% 100% 100% 100%;
+            border-image-source: none;
+            border-image-width: 1 1 1 1;
+            border-left-color-ltr-source: physical;
+            border-left-color-rtl-source: physical;
+            border-left-color-value: #B8B8B8;
+            border-left-style-ltr-source: physical;
+            border-left-style-rtl-source: physical;
+            border-left-style-value: solid;
+            border-left-width-ltr-source: physical;
+            border-left-width-rtl-source: physical;
+            border-left-width-value: 1px;
+            border-right-color-ltr-source: physical;
+            border-right-color-rtl-source: physical;
+            border-right-color-value: #B8B8B8;
+            border-right-style-ltr-source: physical;
+            border-right-style-rtl-source: physical;
+            border-right-style-value: solid;
+            border-right-width-ltr-source: physical;
+            border-right-width-rtl-source: physical;
+            border-right-width-value: 1px;
+            border-top-color: #B8B8B8;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            border-top-style: solid;
+            border-top-width: 1px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+            float: left;
+        }
+        .button{
+            border: none;
+            cursor: pointer;
+            height: 30px;
+            margin-left:0px;
+            background: #000720;
+            outline: none;
+            color: white;
+            font-size: 20px;
+            font-family: Microsoft YaHei;
+        }
+    </style>
+    <script src="../scripts/jquery-1.9.1.min.js"></script>
+    <script src="../echarts/build/dist/echarts.js"></script>
+</head>
+<body>
+    <div style="position: absolute; width: 500px; height: 300px; background-color: #252c34">
+        <div style="position: absolute; width: 100%; left: 10px; height: 30px; line-height: 30px;">
+            <span>时间：</span>
+            <span id="time" style="margin-left: 20px;">2015-05-25 16:15:00</span>
+            <span id="warningLevel" style="margin-left: 50px; color: red;">一级告警</span>
+            <input type="button" id="detailedInfo" value="查看详情" class="button img-preview" style="margin-left: 20px;" />
+        </div>
+        <div style="position: absolute; width: 100%; left: 10px; height: 30px; top: 30px; line-height: 30px;">
+            <span>对象名称：</span>
+            <span id="name" style="margin-left: 20px;">26片区-备用地B-8</span>            
+        </div>
+        <div style="position: absolute; width: 100%; left: 10px; height: 30px; top: 60px; line-height: 30px;">
+            <span>下限：</span>
+            <span style="margin-left: 20px;"><b id="downLimit" >0.01MB</b></span>    
+            <span style="margin-left: 50px;">上限：</span>
+            <span style="margin-left: 20px;"><b id="upLimit">0.04MB</b></span>        
+        </div>
+        <div style="position: absolute; width: 100%; height: 30px; top: 90px; line-height: 30px;">
+            <span>【告警正文】</span>  
+            <textarea id="content" style="border: 1px solid #00fcff; position: absolute; top: 40px; left: 10px; width: 480px; height: 160px; background-color: #252c34; color: white; font-size: 20px; overflow: auto;" disabled="none"></textarea>                 
+        </div>
+    <script type="text/javascript">       
+        var baseUrl = '10.221.247.7';
+        var locationUrl = window.location.href;
+        locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+        var nameVal = getUrlParam(locationUrl,'');
+        //console.log(nameVal);
+        var name = decodeURIComponent(nameVal.name);
+        var content = decodeURIComponent(nameVal.content);
+        var time = decodeURIComponent(nameVal.time);
+        var warningLevel = decodeURIComponent(nameVal.level);
+        var downLimit = decodeURIComponent(nameVal.down);
+        var upLimit = decodeURIComponent(nameVal.up);
+        function getUrlParam(sUrl, sKey) {
+            sUrl = sUrl.split('?')[1];//截取地址之后的所有参数
+            if(sKey !== ''){
+                //console.log('不为空')
+                //构造正则，并截取最新的sUrl
+                var para = '(' + sKey + '=' + ')';
+                var myReg1 = new RegExp(para,'g');
+                //var myReg2 = /[A-Za-z0-9]+/g;//可以修改传中文或者数字参数
+                var myReg2 = /^([\u4E00-\u9FA5]+，?)+$/g;
+                var myReg = new RegExp(myReg1.source + myReg2.source,'g');
+                //console.log(myReg)
+                var temArray = sUrl.match(myReg);//得到的是含有参数分隔符的数组,如果只需要返回参数，则还需进行下面的转换
+                //console.log(temArray)  
+                if(temArray){
+                    temArray = temArray.toString().replace(myReg1,'');//删除参数分隔符sKey=,得到的是字符串
+                    var result = temArray.split(',');//字符串转换为数组
+                    return result;
+                }else{
+                    //console.log(sKey)
+                    return '';//传入的参数名称sKey有错或者参数名值为空
+                }              
+            }
+            if(sKey === ''){
+                //console.log('为空')
+                sUrl = sUrl.split(/[&#]/g);//以特殊字符为分隔符生成数组
+                var resultObj = {};//最后需要返回的对象
+                for(var i= 0, len = sUrl.length; i<len; ++i){
+                    var temValue = sUrl[i];
+                    var temArrayV = temValue.split('=');
+                    resultObj[temArrayV[0]] = temArrayV[1];
+                }
+                return resultObj;
+            }
+        }    
+        $('#time').html(time);
+        $('#warningLevel').html(warningLevel);
+        $('#content').html(content);
+        $('#downLimit').html(downLimit);
+        $('#upLimit').html(upLimit);
+        $('#name').html(name);
+        $('#detailedInfo').on('click',function(){
+            window.parent.callDetailedInfoFromChild(name);
+        })
+    </script>
+</body>
+</html>
