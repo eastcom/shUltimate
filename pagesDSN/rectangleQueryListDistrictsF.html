@@ -2,7 +2,18 @@
 <head>
     <meta charset="utf-8">
     <title>热点区域小区列表</title>
+    <!-- <link rel="stylesheet" href="../bootstrap/css/bootstrap.css" /> -->
     <style>
+        body {
+            font-family: Microsoft YaHei;
+        }
+        /*.btn {
+            display: inline-block;
+            padding: 4px 12px;
+            margin-bottom: 0;
+            font-size: 14px;
+            line-height: 20px;
+        }*/
         #title{
             font-size:20px;
             font-weight:800;
@@ -23,6 +34,12 @@
             text-align: center;
         }
         b{font-family:Microsoft YaHei; color:#87CEFA;height:40px;font-size:18px; font-weight:800;}
+        #infoAll table{border: solid 1px #D5D5D5;border-collapse: collapse;width: 100%;}
+        #infoAll table td{border: 1px solid #D5D5D5;font-size: 14px;padding: 7px 5px;}
+        #infoAll table th{background-color: #EEE;border-right: 1px solid #D5D5D5;font-size: 16px;line-height: 120%;font-weight: bold;padding: 8px 5px;text-align: left;}
+        a {
+            font-size: 16px; font-family: Microsoft YaHei;
+        }
     </style>
 
 </head>
@@ -31,12 +48,12 @@
 <div id="title" style="text-align: left;border: none"></div>
 <div style="position: absolute;top:14px;left:8px;height:11px;border: 2px solid #0000CD "></div>
 <div id="infoAll" style="font-family:Microsoft YaHei; border-top:1px solid;position:absolute;left:8px;width:310px;height:270px;margin-top:-2px; line-height: 30px">
-    <div id="name" style="border:none;position:absolute;left:0px;width:210px;margin-top:10px; line-height: 30px"></div>
+    <!-- <div id="name" style="border:none;position:absolute;left:0px;width:210px;margin-top:10px; line-height: 30px"></div>
     <div id="userCount" style="border:none;position:absolute;left:300px;width:100px;margin-top:10px; line-height: 30px"></div>
-    <div id="type" style=" border:none;position:absolute;left:210px;width:90px;margin-top:10px; line-height: 30px"></div>
+    <div id="type" style=" border:none;position:absolute;left:210px;width:90px;margin-top:10px; line-height: 30px"></div> -->
 </div>
 <input type="text" id="heatName" style="position: absolute; top: 315px;left: 10px" value="请输入热点区域名称">
-<input type="button" id="ok" style="position: absolute; top: 315px;left: 240px;" value="保存">
+<input type="button" id="ok" class="btn btn-info" style="cursor: pointer; position: absolute; top: 312px;left: 235px; color: #fff; background-color: #2f96b4;  line-height: 18px;" value="保 存">
 <div id="divWhoise" style="border:none; position: absolute;left:100px;margin-top: 100px">
     <input type="image" src="images/loading.gif"  width="124px" height="124px" align="middle" /><p>数据加载中，请稍后...</p>
 </div>
@@ -84,39 +101,66 @@
     }
     //alert(arrayNo.length);
     var arrayNo = window.parent.detailedInfoVector;//直接操纵父页面的对象
+    //表头
+    var htmlStr = '<table><tr>';
+    htmlStr += '<th align="left"><input type="checkbox" id="checkAll" />' + '小区名称' + '</th>';
+    htmlStr += '<th align="center">' + '小区类型' + '</th>';
+    htmlStr += '</tr>';
+    //主体
+    arrayNo.map(function(obj, index) {
+        if(index%2 !=0){
+            htmlStr += '<tr style="background: #E8E8E8;">';
+        }else {
+            htmlStr += '<tr>';
+        }
+        var name = obj.name,
+            typeName = obj.type;
+        var tepName = name;
+        if(strlen(name) > 21){
+            tepName = name.substring(0,10);
+        }
+        if(!typeName) {
+            typeName = '--';
+        }
+        htmlStr += '<td align="left" title="' + name + '">' + '<a href="#" onclick="detailedInformation(\''+name+'\')">' + '<input type="checkbox" style="position: relative;" name="\''+name+'\'" +/>' + tepName + '</a>' + '</td>';
+        htmlStr += '<td align="center">' + typeName + '</td>';
+        htmlStr += '</tr>';
+    });
+    htmlStr += '</table>';
+    $('#infoAll').html(htmlStr);
     //var userCountInfo ='<b>'+"用户数"+'</b>';
-    var nameInfo ='<b>'+"小区名称"+'</b>';
-    $("#name").append("<div style='text-align: left;background: #E8E8E8 ;border-right: none; border-bottom: none;'>" + "<input type='checkbox' id='checkAll' style='position: relative;'/>" + nameInfo+"</div>");
-    var type = '<b>' + "小区类型" + '</b>';
-    $("#type").append("<div style='text-align: center;background: #E8E8E8 ;border-right: none; border-bottom: none;'>" + type+"</div>");
+    // var nameInfo ='<b>'+"小区名称"+'</b>';
+    // $("#name").append("<div style='text-align: left;background: #E8E8E8 ;border-right: none; border-bottom: none;'>" + "<input type='checkbox' id='checkAll' style='position: relative;'/>" + nameInfo+"</div>");
+    // var type = '<b>' + "小区类型" + '</b>';
+    // $("#type").append("<div style='text-align: center;background: #E8E8E8 ;border-right: none; border-bottom: none;'>" + type+"</div>");
     document.getElementById("title").innerHTML ="&nbsp"  +"&nbsp" + "小区列表"+ "【" +arrayNo.length +"】";
-    for(var j=0;j<arrayNo.length;j++){
-        var name = arrayNo[j].name;
-        var typeName = arrayNo[j].type;
-        if(typeName === null){
-            typeName = '---'
-        }
-        if(strlen(name) >21) {
-            var temName = name.substring(0,12);
-        }
-        else{
-            var temName = name;
-        }
-        if(j%2 ===0){
-            $("#name").append("<div style='text-align: left;' >" + '<a href="#" onclick="detailedInformation(\''+name+'\')">' + '<input type="checkbox" style="position: relative;" name="\''+name+'\'" +/>' + temName + '</a>' + "</div>");
-            $("#type").append("<div style='text-align: center;border-left: none;' >" + typeName +  "</div>");
-        }
-        else{
-            $("#name").append("<div style='text-align: left;background: #E8E8E8;border-top: none;border-bottom: none;' >" + '<a href="#" onclick="detailedInformation(\''+name+'\')">' + '<input type="checkbox" style="position: relative;" name="\''+name+'\'" +/>' + temName + '</a>' + "</div>");
-            $("#type").append("<div style='text-align: center;background: #E8E8E8;border-top: none;border-bottom: none;border-left:none;' >"  + typeName  + "</div>");
-        }
-    }
+    // for(var j=0;j<arrayNo.length;j++){
+    //     var name = arrayNo[j].name;
+    //     var typeName = arrayNo[j].type;
+    //     if(typeName === null){
+    //         typeName = '---'
+    //     }
+    //     if(strlen(name) >21) {
+    //         var temName = name.substring(0,12);
+    //     }
+    //     else{
+    //         var temName = name;
+    //     }
+    //     if(j%2 ===0){
+    //         $("#name").append("<div style='text-align: left;' >" + '<a href="#" onclick="detailedInformation(\''+name+'\')">' + '<input type="checkbox" style="position: relative;" name="\''+name+'\'" +/>' + temName + '</a>' + "</div>");
+    //         $("#type").append("<div style='text-align: center;border-left: none;' >" + typeName +  "</div>");
+    //     }
+    //     else{
+    //         $("#name").append("<div style='text-align: left;background: #E8E8E8;border-top: none;border-bottom: none;' >" + '<a href="#" onclick="detailedInformation(\''+name+'\')">' + '<input type="checkbox" style="position: relative;" name="\''+name+'\'" +/>' + temName + '</a>' + "</div>");
+    //         $("#type").append("<div style='text-align: center;background: #E8E8E8;border-top: none;border-bottom: none;border-left:none;' >"  + typeName  + "</div>");
+    //     }
+    // }
     //$("#name").append('<input type="text" id="heatName" value="请输入热点区域名称">');
     //$("#type").append('<input type="button" id="ok" value="保存">');
     $("#divWhoise").hide();
 
     $('#checkAll').on('click',function(){
-        $('#name :checkbox').prop('checked',this.checked);
+        $('#infoAll :checkbox').prop('checked',this.checked);
         //$(this).is(':checked') && $('#name :checkbox').attr('checked',true);
         //$(this).is(':checked') || $('#name :checkbox').attr('checked',false);
     });
@@ -133,7 +177,7 @@
         }
         var checkArr = [];
         //全选checkBox
-        $('#name :checkbox').each(function(i){
+        $('#infoAll :checkbox').each(function(i){
             var isCheck = $(this).prop("checked");
             if(isCheck){
                 checkArr.push(this.name.replace(/'/g,''));

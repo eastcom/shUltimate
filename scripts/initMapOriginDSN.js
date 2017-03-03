@@ -1,3 +1,23 @@
+//缓存栅格数据，播放用
+var cacheRasterData = {
+    playbackRaster: [],
+    timer: null
+};
+// cacheRasterData.playbackRaster = [];
+//普通数组去重
+Array.prototype.unique2 = function()
+{
+    var n = {},r=[]; //n为hash表，r为临时数组
+    for(var i = 0; i < this.length; i++) //遍历当前数组
+    {
+        if (!n[this[i]]) //如果hash表中没有当前项
+        {
+            n[this[i]] = true; //存入hash表
+            r.push(this[i]); //把当前数组的当前项push到临时数组里面
+        }
+    }
+    return r;
+};
 //判断对象是否为空
 function isEmpty(obj){
     for (var name in obj){
@@ -661,17 +681,21 @@ function checkDomById(id) {
         return true;
     }
 }
+//初始化栅格查询条件DIV
 function conditionsSelect() {
     $('#conditionsSelect').css('display', 'block');
     $('.datepicker').parent().show();
-    var current = getCurrentTimeHour(24);
+    var current = getCurrentTimeMin(60);
     $('#timeBeginSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true, current: current});
     $('#timeEndSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true});
 }
+//隐藏栅格查询条件DIV
 function conditionsUnSelect() {
     $('#conditionsSelect').css('display', 'none');
     $('.datepicker').parent().hide();
+    stopPlaySelectRaster();
 }
+//获取界面条件
 function querySelectRaster() {
     rectangleLayer.clearLayers();
     labelRectangleLayer.clearLayers();
@@ -680,27 +704,82 @@ function querySelectRaster() {
         timeEnd = $('#timeEndSelect').val(),
         topN = $('#topNSelect').val() || 100,
         index = $('#indexSelect option:selected').val();
-    console.log(topN);
-    console.log(index);
-    // ajaxQueryRaster();
+    // console.log(topN);
+    // console.log(index);
+    ajaxQueryRaster(timeBegin, timeEnd, topN);
 }
+//播放栅格历史
 function playSelectRaster() {
-    var data = [1,3,5,7,9];
-    var i = 0;
-    var time = setInterval(function() {
-        if(i<data.length) {
-            console.log(data[i++]);
-        }else{
-            clearInterval(time);
-        }
-        console.log('not finished yet!');
-    }, 1000);
+    if($('#playSelect').val() == '播 放') {
+        beginPlaySelectRaster();
+        $('#playSelect').val('停 止');
+    }else {
+        stopPlaySelectRaster();
+    }
 }
+//开始播放
+function beginPlaySelectRaster(){
+    var res = cacheRasterData.playbackRaster;
+    var count = 0;
+    // console.log(res);
+    cacheRasterData.timer = setInterval(function() {
+        if(count < res.length) {
+            rectangleLayer.clearLayers();
+            var data = res[count++];
+            drawSelectRaster(data);
+        }else{
+            stopPlaySelectRaster();
+        }
+        // console.log('not finished yet!');
+    }, 2000);
+}
+//停止播放
+function stopPlaySelectRaster() {
+    clearInterval(cacheRasterData.timer);
+    $('#playSelect').val('播 放');
+}
+//隐藏栅格查询条件DIV，功能同switchControl
 function closeSelectRaster() {
     conditionsUnSelect();
 }
-function ajaxQueryRaster() {
-    var url = 'http://' + baseUrl + ':'+basePort+'/services/ws/fast_query/area/pm/gridPf';
+//在地图上绘制栅格
+function drawSelectRaster(data) {
+    for(var i=0,lenI=data.length; i<lenI; ++i){
+        var latMax = parseFloat(data[i].lat2),
+            latMin = parseFloat(data[i].lat1),
+            lngMax = parseFloat(data[i].lon2),
+            lngMin = parseFloat(data[i].lon1);
+        if(!isNumber(latMin) || !isNumber(latMax) || !isNumber(lngMin) || !isNumber(lngMax)){
+            continue;
+        }
+        var minBd = wgs84tobd09(lngMin,latMin),
+            maxBd = wgs84tobd09(lngMax,latMax);
+        //坐标转换
+        // var southWestValue = L.latLng(minBd[1], minBd[0]),
+        //     northEastValue = L.latLng(maxBd[1], maxBd[0]),
+        //坐标不转换
+        var southWestValue = L.latLng(latMin, lngMin),
+            northEastValue = L.latLng(latMax, lngMax),
+            boundsValue = L.latLngBounds(southWestValue, northEastValue);
+        var latlng = boundsValue.getCenter();
+        var dataVal = data[i].pf_stock;
+        var gridId = data[i].grid_id;
+        var fillColor = setRectangleColor(dataVal);
+        //创建栅格
+        var rasterPolygon = L.rectangle(boundsValue, {
+            fill: true,
+            fillColor: fillColor,
+            fillOpacity: 0.4,
+            weight: 1,
+            color: fillColor
+        })
+            .addTo(rectangleLayer);
+    }
+}
+//根据页面条件ajax查询栅格
+function ajaxQueryRaster(startTime, endTime, topN) {
+    // var url = 'http://' + baseUrl + ':'+basePort+'/services/ws/fast_query/area/pm/gridPf';
+    var url = 'http://' + baseUrl + ':' + basePort + '/services/ws/fast_query/area/pm/gridTopN?startTime=' + startTime + '&endTime=' + endTime + '&topN=' + topN;
     //console.log(url);
     $.ajax({
         url: url,
@@ -718,39 +797,59 @@ function ajaxQueryRaster() {
     })
         .done(function(data) {
             if(!data.length) return;
-            console.log('栅格数量:' + data.length);
-            for(var i=0,lenI=data.length; i<lenI; ++i){
-                var latMax = parseFloat(data[i].lat2),
-                    latMin = parseFloat(data[i].lat1),
-                    lngMax = parseFloat(data[i].lon2),
-                    lngMin = parseFloat(data[i].lon1);
-                if(!isNumber(latMin) || !isNumber(latMax) || !isNumber(lngMin) || !isNumber(lngMax)){
-                    continue;
-                }
-                var minBd = wgs84tobd09(lngMin,latMin),
-                    maxBd = wgs84tobd09(lngMax,latMax);
-                //坐标转换
-                // var southWestValue = L.latLng(minBd[1], minBd[0]),
-                //     northEastValue = L.latLng(maxBd[1], maxBd[0]),
-                //坐标不转换
-                var southWestValue = L.latLng(latMin, lngMin),
-                    northEastValue = L.latLng(latMax, lngMax),
-                    boundsValue = L.latLngBounds(southWestValue, northEastValue);
-                var latlng = boundsValue.getCenter();
-                var dataVal = data[i].pf_stock;
-                var gridId = data[i].grid_id;
-                var fillColor = setRectangleColor(dataVal);
-                //创建栅格
-                var rasterPolygon = L.rectangle(boundsValue, {
-                    fill: true,
-                    fillColor: fillColor,
-                    fillOpacity: 0.4,
-                    weight: 1,
-                    color: fillColor
-                })
-                    .addTo(rectangleLayer);
-            }
-            // map.addLayer(rectangleLayer);
+            //获取所有时间
+            var timeArr = data.map(function(obj) {
+                return obj.time;
+            });
+            var timeUniqueArr = timeArr.unique2();
+            // console.log(timeUniqueArr);
+            //根据时间分组数据
+            var timeGroup = [];
+            timeUniqueArr.map(function(val,index) {
+                timeGroup[index] = [];
+                data.map(function(obj) {
+                    var time = obj.time;
+                    if(time == val) {
+                        timeGroup[index].push(obj);
+                    }
+                });
+            });
+            // console.log(timeGroup);
+            //绘制最近时间的栅格
+            var lengh = timeGroup.length;
+            drawSelectRaster(timeGroup[lengh-1]);
+            // timeGroup[lengh-1].map(function(obj) {
+            //     var latMax = parseFloat(obj.lat2),
+            //         latMin = parseFloat(obj.lat1),
+            //         lngMax = parseFloat(obj.lon2),
+            //         lngMin = parseFloat(obj.lon1);
+            //     if(!isNumber(latMin) || !isNumber(latMax) || !isNumber(lngMin) || !isNumber(lngMax)){
+            //         return;
+            //     }
+            //     var minBd = wgs84tobd09(lngMin,latMin),
+            //         maxBd = wgs84tobd09(lngMax,latMax);
+            //     //坐标转换
+            //     // var southWestValue = L.latLng(minBd[1], minBd[0]),
+            //     //     northEastValue = L.latLng(maxBd[1], maxBd[0]),
+            //     //坐标不转换
+            //     var southWestValue = L.latLng(latMin, lngMin),
+            //         northEastValue = L.latLng(latMax, lngMax),
+            //         boundsValue = L.latLngBounds(southWestValue, northEastValue);
+            //     var latlng = boundsValue.getCenter();
+            //     var dataVal = obj.pf_stock;
+            //     var gridId = obj.grid_id;
+            //     var fillColor = setRectangleColor(dataVal);
+            //     //创建栅格
+            //     var rasterPolygon = L.rectangle(boundsValue, {
+            //         fill: true,
+            //         fillColor: fillColor,
+            //         fillOpacity: 0.4,
+            //         weight: 1,
+            //         color: fillColor
+            //     })
+            //         .addTo(rectangleLayer);
+            // });
+            cacheRasterData.playbackRaster = timeGroup;
         });
 }
 //添加搜索工具栏
