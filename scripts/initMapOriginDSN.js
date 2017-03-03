@@ -633,6 +633,7 @@ function heatMapUnSelect(e){
     }
     if(layerName === '栅格图层'){
         map.removeLayer(labelRectangleLayer);
+        conditionsUnSelect();
     }
 }
 function heatMapSelect(e){
@@ -649,7 +650,108 @@ function heatMapSelect(e){
         if(curZoom > 16){
             map.addLayer(labelRectangleLayer);
         }
+        conditionsSelect();
     }
+}
+function checkDomById(id) {
+    var checkCustomDiv = document.getElementById(id);
+    if(!checkCustomDiv){
+        return false;
+    }else{
+        return true;
+    }
+}
+function conditionsSelect() {
+    $('#conditionsSelect').css('display', 'block');
+    $('.datepicker').parent().show();
+    var current = getCurrentTimeHour(24);
+    $('#timeBeginSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true, current: current});
+    $('#timeEndSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true});
+}
+function conditionsUnSelect() {
+    $('#conditionsSelect').css('display', 'none');
+    $('.datepicker').parent().hide();
+}
+function querySelectRaster() {
+    rectangleLayer.clearLayers();
+    labelRectangleLayer.clearLayers();
+
+    var timeBegin = $('#timeBeginSelect').val(),
+        timeEnd = $('#timeEndSelect').val(),
+        topN = $('#topNSelect').val() || 100,
+        index = $('#indexSelect option:selected').val();
+    console.log(topN);
+    console.log(index);
+    // ajaxQueryRaster();
+}
+function playSelectRaster() {
+    var data = [1,3,5,7,9];
+    var i = 0;
+    var time = setInterval(function() {
+        if(i<data.length) {
+            console.log(data[i++]);
+        }else{
+            clearInterval(time);
+        }
+        console.log('not finished yet!');
+    }, 1000);
+}
+function closeSelectRaster() {
+    conditionsUnSelect();
+}
+function ajaxQueryRaster() {
+    var url = 'http://' + baseUrl + ':'+basePort+'/services/ws/fast_query/area/pm/gridPf';
+    //console.log(url);
+    $.ajax({
+        url: url,
+        type: 'GET',
+        dataType: 'json',
+        data: {},
+        beforeSend: function(XMLHttpRequest){
+            document.getElementById('loading').style.visibility = 'visible';
+            $('#loading').html("<img src='images/loading.gif' />");
+        },
+        complete: function(XMLHttpRequest,textStatus){
+            document.getElementById('loading').style.visibility = 'hidden';
+            $('#loading').empty();
+        }
+    })
+        .done(function(data) {
+            if(!data.length) return;
+            console.log('栅格数量:' + data.length);
+            for(var i=0,lenI=data.length; i<lenI; ++i){
+                var latMax = parseFloat(data[i].lat2),
+                    latMin = parseFloat(data[i].lat1),
+                    lngMax = parseFloat(data[i].lon2),
+                    lngMin = parseFloat(data[i].lon1);
+                if(!isNumber(latMin) || !isNumber(latMax) || !isNumber(lngMin) || !isNumber(lngMax)){
+                    continue;
+                }
+                var minBd = wgs84tobd09(lngMin,latMin),
+                    maxBd = wgs84tobd09(lngMax,latMax);
+                //坐标转换
+                // var southWestValue = L.latLng(minBd[1], minBd[0]),
+                //     northEastValue = L.latLng(maxBd[1], maxBd[0]),
+                //坐标不转换
+                var southWestValue = L.latLng(latMin, lngMin),
+                    northEastValue = L.latLng(latMax, lngMax),
+                    boundsValue = L.latLngBounds(southWestValue, northEastValue);
+                var latlng = boundsValue.getCenter();
+                var dataVal = data[i].pf_stock;
+                var gridId = data[i].grid_id;
+                var fillColor = setRectangleColor(dataVal);
+                //创建栅格
+                var rasterPolygon = L.rectangle(boundsValue, {
+                    fill: true,
+                    fillColor: fillColor,
+                    fillOpacity: 0.4,
+                    weight: 1,
+                    color: fillColor
+                })
+                    .addTo(rectangleLayer);
+            }
+            // map.addLayer(rectangleLayer);
+        });
 }
 //添加搜索工具栏
 function addSearchTool(){
@@ -3456,7 +3558,7 @@ function closeNetWorkScaleDiv(){
     document.getElementById('netWorkScale').style.visibility = 'hidden';
 }
 //添加真实栅格
-function addRectangleLayer(){
+function addRectangleLayer1(){
     var url = 'http://' + baseUrl + ':'+basePort+'/services/ws/fast_query/area/pm/gridPf';
     //console.log(url);
     $.ajax({
@@ -3475,6 +3577,7 @@ function addRectangleLayer(){
     })
         .done(function(data){
             if(!data.length) return;
+            console.log('栅格数量:' + data.length);
             for(var i=0,lenI=data.length; i<lenI; ++i){
                 var latMax = parseFloat(data[i].lat2),
                     latMin = parseFloat(data[i].lat1),
@@ -3560,6 +3663,9 @@ function addRectangleLayer(){
                 rectangleLayerIndexTrend(layer);
             });
         });
+}
+function addRectangleLayer() {
+    switchControl.addOverlay(rectangleLayer,'栅格图层','业务');
 }
 //栅格指标趋势图
 function rectangleLayerIndexTrend(layer){
