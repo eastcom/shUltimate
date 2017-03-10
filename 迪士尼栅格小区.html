@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="renderer" content="webkit">
-    <meta http-equiv= "Pragma" content= "no-cache" /> 
-    <meta http-equiv= "Cache-Control" content= "no-cache" /> 
-    <meta http-equiv= "Expires" content= "0" /> 
     <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" href="css/easyui.css" />
     
@@ -130,7 +127,7 @@
             right: 120px;
             top: 50px;
             width: 340px;
-            /*height: 300px;*/
+            height: 250px;
             background-color: #003254;
             color: white;
         }
@@ -140,23 +137,6 @@
         #conditionsSelect .div-custom-wx span {
             font-size: 18px;
             line-height: 20px;
-        }
-        #disInRaster {
-            position: absolute;
-            display: none;
-            right: 120px;
-            top: 350px;
-            width: 340px;           
-            border-radius: 10px;
-            /*height: 300px;*/
-            background-color: #003254;
-            color: white;
-        }
-        #disInRaster table{border: solid 1px #D5D5D5;border-collapse: collapse;width: 100%;}
-        #disInRaster table td{border: 1px solid #D5D5D5;font-size: 14px;padding: 7px 5px;}
-        #disInRaster table th{/*background-color: #EEE;*/border-right: 1px solid #D5D5D5;font-size: 16px;line-height: 120%;font-weight: bold;padding: 8px 5px;text-align: center;}
-        #disInRaster a {
-            font-size: 16px; font-family: Microsoft YaHei; color: #fff;
         }
         .custom-detailed-info{margin-top: 10px; text-align: center;}
         .button{
@@ -233,16 +213,6 @@
             color: #000000;
             font-weight: normal;
             font-size: 10px;
-            z-index: 9999;
-        }
-        .sweet-deal-labelBig {
-            background-color: rgba(255, 255, 255, 0.001);
-            -moz-box-shadow: none;
-            -webkit-box-shadow: none;
-            box-shadow: none;
-            color: #000000;
-            font-weight: normal;
-            font-size: 16px;
             z-index: 9999;
         }
         .leaflet-contextmenu a.leaflet-contextmenu-item{
@@ -322,7 +292,7 @@
     <script src="scripts/Semicircle.js"></script>
     <script src="scripts/leaflet.baidu.min.js"></script>
     <script src="scripts/testData.js"></script>
-    <script src="scripts/initMapOriginDSN.js"></script>
+    <script src="scripts/disInRaster.js"></script>
     <script>
         //地铁线
         var subway1 = new L.featureGroup(),
@@ -346,6 +316,11 @@
 </head>
     <body>
         <div id="map"></div>
+        <div style="position: absolute; left:100px; top: 200px; z-index: 9999;">
+            <input type="button" placeholder="" value="提取" onclick="beginCal()" />
+            <textarea id="infos" style="width: 600px; height: 400px; overflow: auto;"></textarea>
+        </div>
+        
 		<div id="infoLocation"></div>
         <div id="loading"></div>
         <div id="allIndexShowRight" class="img-preview">
@@ -363,30 +338,23 @@
             <!--<img src="images/closePlot.png" style="position: absolute; right: 20px;" onclick="closeTrendPlot()"/>-->
             <!--<div id="trendPlotFromChild"></div>-->
         <!--</div>-->
-        <div id="trendPlotFromChild" style="visibility: hidden; z-index: 999;"></div>
+        <div id="trendPlotFromChild" style="visibility: hidden;"></div>
         <div id="win"  style="visibility: hidden;"></div>
         <div id="legendControl" ></div>
         <div id="netWorkScale" class="img-preview"></div>
         <div id="conditionsSelect" class="img-preview">
-            <!-- <div class="div-custom-wx">
-                <span>指标类型：</span>
-                <select id="indexType" class="selectpicker" style="display: inline-block;">
-                    <option value="desc">增幅</option>
-                    <option value="asc">劣化</option>
-                </select>
-            </div> -->
             <div class="div-custom-wx">
                 <!-- <input type="radio" name="zengfu" value="增幅" />增幅
                 <input type="radio" name="liehua" value="劣化" />劣化 -->
                 <span>TOPN：</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <input type="text" id="topNSelect" style="display: inline-block;" placeholder="100" AUTOCOMPLETE="off" />
+                <input type="text" id="topNSelect" style="display: inline-block;" placeholder="100" />
                 
             </div>
             <div class="div-custom-wx">
                 <span>指标选择：</span>
-                <select id="indexSelect" class="selectpicker" style="display: inline-block;" AUTOCOMPLETE="off">
-                    <option value="总用户数">用户数（人）</option>
-                    <option value="总流量">流量（MB）</option>
+                <select id="indexSelect" class="selectpicker" style="display: inline-block;">
+                    <option value="users">用户数</option>
+                    <option value="data">流量</option>
                 </select>
                 
             </div>
@@ -405,12 +373,6 @@
                     <!-- <input type="button" id="closeSelect" class="btn btn-warning" value="关 闭" placeholder="" onclick="closeSelectRaster()" /> -->
                 </center>
             </div>
-        </div>
-        <div id="disInRaster" >
-            <div style="height: 30px; background-color: #36648B ; border-top-left-radius: 10px; border-top-right-radius: 10px; /*border-bottom: 1px solid gray;*/">
-                <img alt="关闭" title="关闭" src="images/closePlot.png" style="float: right; margin-right: 10px; cursor: pointer; margin-top: 6px;" onclick="hideDisInRaster()" />
-            </div>
-            <div id="tableDisInRaster" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; max-height: 300px; overflow-y: auto;"></div>
         </div>
         <script>
             //地图相关定义
@@ -477,11 +439,11 @@
                 //addDynamicMenu(testData);
                 addXQ2Map(heatIndexDis,heatFlag);
                 //addWangGe();                
-                addAllDis();
+                // addAllDis();
                 //addMedianCycleRoad();
                 //addSubway();
                 //addPosNBGJ('南北高架',heatFlag);
-                showAllIndexInfo(heatIndexDis,false);
+                // showAllIndexInfo(heatIndexDis,false);                
             }
             //测试代码,供其他屏调用
            // setTimeout(function(){

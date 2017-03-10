@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>辅助工具</title>
+<meta name="description" content="">
+<meta name="keywords" content="">
+<link rel="stylesheet" href="css/leaflet.css" />
+<link rel="stylesheet" href="css/leaflet.draw.css" />
+<style>
+	#map {
+		position: absolute; left: 0; right: 0; bottom: 0; top: 0;
+	}
+	#pointInfos {
+		position: absolute; right: 100px; top: 50px; width: 300px; height: 400px; z-index: 99;
+	}
+</style>
+<script>
+	Array.prototype.unique2 = function() {
+		var n = {},
+		r = []; //n为hash表，r为临时数组
+		for (var i = 0; i < this.length; i++) //遍历当前数组
+		{
+			if (!n[this[i]]) //如果hash表中没有当前项
+			{
+				n[this[i]] = true; //存入hash表
+				r.push(this[i]); //把当前数组的当前项push到临时数组里面
+			}
+		}
+		return r;
+	};
+</script>
+<script>
+	//基本URL
+	var baseUrl = '10.221.247.7';
+	var locationUrl = window.location.href;
+	locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+	var hostName = window.location.hostname;
+	hostName != '' && (baseUrl = hostName); 
+	//基本端口号
+	var basePort = '8080';
+	var locationPort = window.location.port;
+	locationPort != '' && (basePort = locationPort);
+</script>
+<script src="scripts/jquery-1.9.1.min.js"></script>
+<script src="scripts/leaflet.js"></script>
+<script src="scripts/leaflet.draw.js"></script>
+<script src="scripts/leaflet.baidu.min.js"></script>
+<script src="scripts/railwayPoints.js"></script>
+</head>
+<body>
+	<div id="map"></div>
+	<!-- <div>
+		<textarea id="pointInfos"></textarea>
+	</div> -->
+	<script>
+		var TOOLS = {
+			map: null,
+			layers: {}
+		};
+		TOOLS.layers.markerLayer = L.featureGroup();
+		TOOLS.layers.stationLayer = L.featureGroup();
+		TOOLS.layers.railwayLayer = L.featureGroup();
+		TOOLS.layers.polylineLayer = L.featureGroup();
+		TOOLS.layers.drawnItems = L.featureGroup();
+	</script>
+	<script>
+		$(document).ready(function() {
+			initMap();
+			mapStation(station_84);
+			// mapRailway(railway_bd);
+			drawPolyline(railway_bd);
+			// checkNameMissed(station_84,railway_bd);
+		});
+		function initMap() {
+			var southWest = L.latLng(31.079115, 121.5702),
+				northEast = L.latLng(31.237952, 121.753598),
+				bounds = L.latLngBounds(southWest, northEast);
+			//初始化地图
+			TOOLS.map = new L.map('map',{
+				minZoom: 10,
+				maxZoom: 18,
+				crs: L.CRS.BEPSG3857,
+				//contextmenu: true,
+				//maxBounds: bounds,
+				zoomControl: true,
+				attributionControl: false
+			}).setView([31.147534,121.487125], 13);
+			var normalLayer = new L.tileLayer.baiduLayer('customLayerNormalSH.Map').addTo(TOOLS.map);
+			var satelliteLayer = new L.tileLayer.baiduLayer('customLayerSatSH.Map');
+			var baseLayers = {
+				"地图": normalLayer,
+				"卫星": satelliteLayer
+			};
+			var switchControl = L.control.layers(baseLayers, [],{autoZIndex:false,position:'topright'}).addTo(TOOLS.map);
+			addDrawControl();
+		}
+		function addDrawControl() {
+			var drawControl = new L.Control.Draw({
+				draw: {
+					position: 'topleft',
+					rectangle: {
+						title: 'Query By Rectangle',
+						shapeOptions: {
+							color: '#252c34',
+							fill: false
+						}
+					},
+					polygon: false,
+					polyline: false,
+					circle: false,
+					marker: false
+				},
+				edit: {
+					featureGroup: TOOLS.layers.railwayLayer,
+					edit: {
+						selectedPathOptions: {
+							maintainColor: true,
+							opacity: 0.9
+						}
+					},
+					remove: false
+				}
+			});
+			TOOLS.map.addControl(drawControl);
+			registerDrawDone();
+		}
+		function registerDrawDone() {
+			TOOLS.map.on('draw:created', function(e) {
+				TOOLS.layers.drawnItems.clearLayers();
+				var type = e.layerType,
+				layer = e.layer;
+				//根据图层类别，在这儿定义查询事件
+				if (type === 'rectangle') {
+					var bounds = layer.getBounds();
+					var northEast = bounds.getNorthEast(); //获取矩形右上角坐标
+					var southWest = bounds.getSouthWest(); //获取矩形左下角坐标
+					var minLat = southWest.lat,
+						minLng = southWest.lng,
+						maxLat = northEast.lat,
+						maxLng = northEast.lng;
+					var htmlStr = '';
+					railway_bd.map(function(obj) {
+						var lat = parseFloat(obj.lat),
+							lng = parseFloat(obj.lng);
+						if(lat>=minLat && lat<=maxLat && lng>=minLng && lng<=maxLng){
+							htmlStr += lng + ',' + lat + '\n';
+						}
+					});
+					$('#pointInfos').html(htmlStr);
+				}
+				TOOLS.layers.drawnItems.addLayer(layer);//是否显示所绘形状
+				TOOLS.map.addLayer(TOOLS.layers.drawnItems);
+			});
+		}
+		function mapStation(data) {
+			var icon = setIcon();
+			data.map(function(obj, index) {
+				var lat = obj.lat,
+					lng = obj.lng;
+				var cellName = obj.cell_name;
+				var point = wgs84tobd09(lng,lat).reverse();
+				// var point = [lat,lng];
+				setMarker({
+					layer: TOOLS.layers.stationLayer,
+					point: point,
+					content: cellName,
+					name: cellName,
+					icon: icon
+				});
+			});
+			TOOLS.map.addLayer(TOOLS.layers.stationLayer);
+		}
+		function mapRailway(data) {
+			var icon = setIcon('images/marker-icon.png',25/2,41/2);
+			data.map(function(obj, index) {
+				var lat = parseFloat(obj.lat),
+					lng = parseFloat(obj.lng);
+				var cellName = obj.line;
+				// var point = gcj02tobd09(lng,lat).reverse();
+				var point = [lat,lng];
+				setMarker({
+					layer: TOOLS.layers.stationLayer,
+					point: point,
+					content: cellName,
+					name: cellName,
+					icon: icon
+				});
+			});
+			TOOLS.map.addLayer(TOOLS.layers.railwayLayer);
+		}
+		function drawPolyline(data) {
+			var line_section_arr = data.map(function(obj) {
+				return obj.line_section;
+			});
+			line_section_arr.unique2().map(function(val,i) {
+				var points = [];
+				data.map(function(obj) {
+					var line_section = obj.line_section;
+					if(line_section == val) {
+						var lat = parseFloat(obj.lat),
+							lng = parseFloat(obj.lng);
+						points.push([lat,lng]);
+					}
+				});
+				L.polyline(points,{weight: 40, lineCap: 'round', lineJoin: 'round'}).bindPopup(val).addTo(TOOLS.layers.polylineLayer);
+				TOOLS.map.addLayer(TOOLS.layers.polylineLayer);
+			});
+		}
+		function checkNameMissed(ori_data,pro_data) {
+			ori_data.map(function(obj) {
+				var name = obj.belongs;
+				for(var i=0; i<pro_data.length; ++i) {
+					var line_section = pro_data[i].line_section;
+					if(name == line_section) {
+						return;
+					}
+				}
+				console.log(name);
+			});
+		}
+		function setIcon(iconUrl,width,height){
+			iconUrl = iconUrl || 'images/2G.png'
+			width = width || 35;
+			height = height || 35;
+			var icon = L.icon({
+				iconUrl: iconUrl,
+				iconSize: [width,height]
+			});
+			return icon;
+		};
+		function setPopup(layer,content,opts){
+			var obj = {maxWidth: 1000, maxHeight: 800};
+			opts = obj;
+			var popup = new L.popup(opts)
+				.setContent(content);
+			layer.bindPopup(popup);
+		};
+		function setMarker(obj){
+			var layer = obj.layer || TOOLS.layers.markerLayer,
+				point = obj.point,
+				name = obj.name || 'A Marker',
+				markerIcon = obj.icon,
+				content = obj.content || 'A Marker';
+			var marker = L.marker(point, {
+				title: name, icon: markerIcon, keepInView: true
+			});
+			setPopup(marker,content);
+			marker.addTo(layer);
+		};
+		function wgs84tobd09(lng,lat) {
+			var arr = wgs84togcj02(lng,lat);
+			var lng1 = parseFloat(arr[0]),
+				lat1 = parseFloat(arr[1]);
+			return gcj02tobd09(lng1,lat1);
+		}
+		// console.log(railwayPoints.length);
+	</script>
+</body>
+</html>
