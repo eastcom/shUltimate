@@ -2,7 +2,7 @@
 <head>
     <meta charset="utf-8">
     <style>
-        #infoAll{width: 860px; height: 460px; background-color: #252c34; border: none;  background: url("trendPlots/images/maxBig1.png") no-repeat;}
+        #infoAll{width: 660px; height: 360px; background-color: #252c34; border: none;  background: url("trendPlots/images/indexBackGroundBig.png") no-repeat;}
         #popupContent{
             overflow: hidden;
             border:1px solid #CCC;
@@ -10,8 +10,8 @@
             border: none;
             padding:5px;
             margin-left: 20px;
-            width:830px;
-            height:430px;
+            width:630px;
+            height:330px;
         }
         p{color: #ffffff;}
         /*img{cursor: pointer;}*/
@@ -20,14 +20,14 @@
 <body>
 <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
 <div id="infoAll">
-    <img src="trendPlots/images/closePlot.png" style="z-index: 99; position: absolute; right: 50px; top: 25px; width: 16px; height: 16px; cursor: pointer;" title="关闭" onclick="closeTrendPlotParent()"/>
-    <img src="trendPlots/images/maxim2.png" style="z-index: 99; position: absolute; right: 70px; top: 25px; width: 16px; height: 16px; " title="最大化" />
-    <img src="trendPlots/images/returnNormal.png" style="z-index: 99; position: absolute; right: 90px; top: 25px; width: 16px; height: 16px; cursor: pointer;" title="还原" onclick="normalTrendPlotParent()"/>
+    <img src="trendPlots/images/closePlot.png" style="z-index: 99; position: absolute; right: 50px; top: 20px; width: 16px; height: 16px; cursor: pointer;" title="关闭" onclick="closeTrendPlotParent()"/>
+    <img src="trendPlots/images/maxim.png" style="z-index: 99; position: absolute; right: 70px; top: 20px; width: 16px; height: 16px; cursor: pointer;" title="最大化" onclick="maxTrendPlotParent()"/>
+    <img src="trendPlots/images/returnNormal2.png" style="z-index: 99; position: absolute; right: 90px; top: 20px; width: 16px; height: 16px;" title="还原" />
     <!-- 添加各种趋势图 -->
     <div id="popupContent"></div>
 </div>
 
-<div id="divWhoise" style="border:none; position: absolute;left:350px;top:150px;height: 200px; background-color: #252c34;">
+<div id="divWhoise" style="border:none; position: absolute;left:300px;top:90px;height: 200px; background-color: #252c34;">
     <input type="image" src="../images/loading.gif"  width="124px" height="124px" align="middle" /><p>数据加载中，请稍后...</p>
 </div>
 <!-- ECharts单文件引入 -->
@@ -40,16 +40,9 @@
             echarts: '../echarts/build/dist'
         }
     });
-    //基本URL
     var baseUrl = '10.221.247.7';
     var locationUrl = window.location.href;
     locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
-    var hostName = window.location.hostname;
-    hostName != '' && (baseUrl = hostName); 
-    //基本端口号
-    var basePort = '8080';
-    var locationPort = window.location.port;                
-    locationPort != '' && (basePort = locationPort);
     //解决跨域请求数据问题
     jQuery.support.cors = true;
     jQuery.ajaxSetup({ scriptCharset: "utf-8" , contentType: "application/json; charset=utf-8"});
@@ -371,16 +364,10 @@
             $('#divWhoise').hide();
         });
     }
-    function callServer(gridId, index){
-        var legend = '用户数（人）';
-        if(index.indexOf('流量') != -1) {
-            legend = '流量（MB）';
-        }
+    function callServer(gridId){
         var timeStart = getCurrentTimeHour(3);
         var timeEnd = getCurrentTimeMin(0);
-        // var userUrl = 'http://' + baseUrl + ':8080/services/ws/fast_query/area/a/gridPfTrend?startTime=' + timeStart + '&endTime=' + timeEnd + '&grid_id=' + gridId;
-        var userUrl = 'http://' + baseUrl + ':' + basePort + '/stream/union/grid-times?grid=' + gridId + '&timeBegin=' + timeStart + '&timeEnd=' + timeEnd + '&order=asc' ;
-        
+        var userUrl = 'http://' + baseUrl + ':8080/services/ws/fast_query/area/a/gridPfTrend?startTime=' + timeStart + '&endTime=' + timeEnd + '&grid_id=' + gridId;
         $.ajax({
             url: userUrl,
             type: 'get',
@@ -393,11 +380,7 @@
                     var target = data;
                     for(var i= 0,lenI=target.length; i<lenI; ++i){
                         timeArr.push(target[i].time.substring(11,16));
-                        var dataVal = target[i][index];
-                        if(index.indexOf('流量') != -1) {
-                            dataVal = (dataVal/1024).toFixed(2);
-                        }
-                        userArr.push(dataVal);
+                        userArr.push(target[i]['pf_stock']);
                         //dataArr.push((target[i]['总流量']/1024).toFixed(2));
                     }
                     //timeArr.reverse();
@@ -431,7 +414,7 @@
                                         },
                                         y: 'bottom',
                                         x: 'center',
-                                        data:[index]
+                                        data:['用户数']
                                     },
                                     calculable : true,
                                     grid: {
@@ -459,13 +442,13 @@
                                                     type: 'solid'
                                                 }
                                             },
-                                            data : timeArr.reverse()
+                                            data : timeArr
                                         }
                                     ],
                                     yAxis : [
                                         {
                                             type : 'value',
-                                            name:legend,
+                                            name:'用户数(人)',
                                             axisLabel: {
                                                 textStyle: {
                                                     fontSize: 20,
@@ -489,7 +472,7 @@
                                     ],
                                     series : [
                                         {
-                                            'name':index,
+                                            'name':'用户数',
                                             'type':'line',
                                             itemStyle: {
                                                 normal: {
@@ -502,7 +485,7 @@
                                                     width: 1
                                                 }
                                             },
-                                            'data': userArr.reverse()
+                                            'data': userArr
                                         }
                                     ]
                                 };
@@ -553,15 +536,14 @@
     function closeTrendPlotParent(){
         window.parent.closeTrendPlot();
     }
-    function normalTrendPlotParent(){
-        var str = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + index;
-        window.parent.callDrawTrendPlot(str);
+    function maxTrendPlotParent(){
+        var str = "pagesDSN/rasterInfoBigHW.html?gridId="+gridId;
+        window.parent.callDrawTrendPlotBig(str);
     }
     var nameVal = getUrlParam(locationUrl,'');
     var gridId = nameVal.gridId;
-    var index = nameVal.index;
     //var gridId = 'X001Y039';
-    callServer(gridId,index);
+    callServer(gridId);
     //callServer('中国博览会','腾讯新闻');
 </script>
 </body>

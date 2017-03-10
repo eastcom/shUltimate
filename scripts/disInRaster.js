@@ -34,25 +34,6 @@ function isEmpty(obj){
     }
     return true;
 };
-//计算字符串的长度
-function strlen(str){
-    var len = 0;
-    for (var i=0; i<str.length; i++) {
-        var c = str.charCodeAt(i);
-        //单字节加1
-        if ((c >= 0x0001 && c <= 0x007e) || (0xff60<=c && c<=0xff9f)) {
-            len++;
-        }
-        else {
-            len+=2;
-        }
-    }
-    //如果str中有括号则长度减1
-    if(str.indexOf('(') !== -1){
-        len -= 1;
-    }
-    return len;
-}
 //判断字符是否为整数
 function isNumber(obj){
     //var reg = new RegExp("^[0-9]$");
@@ -491,7 +472,6 @@ function initBaiduMap(){
         //maxBounds: bounds,
 		zoomControl: false,
         attributionControl: false
-    // });
     }).setView([31.147534,121.663992], 17);
     //自定义地图数据源
 	//tileSize==512
@@ -569,7 +549,6 @@ function initBaiduMap(){
     addRectangleTool();//添加框选工具
     addSearchTool();//添加搜索工具
 	//console.timeEnd('test')
-    initTimeControl();
 }
 function initBaiduMapNotDSN(){
     //console.time('test')
@@ -586,7 +565,6 @@ function initBaiduMapNotDSN(){
         //maxBounds: bounds,
         zoomControl: false,
         attributionControl: false
-    // });
     }).setView([31.147534,121.663992], 14);
     //自定义地图数据源
     //tileSize==512
@@ -668,7 +646,6 @@ function initBaiduMapNotDSN(){
     map.on('overlayadd', heatMapSelect);//监测热力图是否勾选
     addRectangleTool();//添加框选工具
     addSearchTool();//添加搜索工具
-    initTimeControl();
     //console.timeEnd('test')
     //getPhoneParas2baselayerChange('卫星');
 }
@@ -685,7 +662,7 @@ function heatMapUnSelect(e){
     }
     if(layerName === '栅格图层'){
         map.removeLayer(labelRectangleLayer);
-        conditionsUnSelect();
+        // conditionsUnSelect();
     }
 }
 function heatMapSelect(e){
@@ -698,11 +675,11 @@ function heatMapSelect(e){
         normalLayer.setOpacity(0.5);
     }
     if(layerName === '栅格图层'){
-        var curZoom = map.getZoom();
-        if(curZoom > 16){
-            map.addLayer(labelRectangleLayer);
-        }
-        conditionsSelect();
+        // var curZoom = map.getZoom();
+        // if(curZoom > 16){
+        //     map.addLayer(labelRectangleLayer);
+        // }
+        // conditionsSelect();
     }
 }
 function checkDomById(id) {
@@ -713,22 +690,13 @@ function checkDomById(id) {
         return true;
     }
 }
-//初始化日历控件
-function initTimeControl() {
-    var current = getCurrentTimeMin(60);
-    $('#timeBeginSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true, current: current});
-    $('#timeEndSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true});
-}
 //初始化栅格查询条件DIV
 function conditionsSelect() {
     $('#conditionsSelect').css('display', 'block');
     $('.datepicker').parent().show();
-    var timeBegin = getCurrentTimeMin(60);
-    var timeEnd = getCurrentTimeMin(0);
-    $('#timeBeginSelect').val(timeBegin.substring(0,16));
-    $('#timeEndSelect').val(timeEnd.substring(0,16));
-
-    rerenderHeatMap();
+    var current = getCurrentTimeMin(60);
+    $('#timeBeginSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true, current: current});
+    $('#timeEndSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true});
 }
 //隐藏栅格查询条件DIV
 function conditionsUnSelect() {
@@ -740,25 +708,14 @@ function conditionsUnSelect() {
 function querySelectRaster() {
     rectangleLayer.clearLayers();
     labelRectangleLayer.clearLayers();
-    document.getElementById('trendPlotFromChild').style.visibility = 'hidden'; 
-    hideDisInRaster();
 
     var timeBegin = $('#timeBeginSelect').val(),
         timeEnd = $('#timeEndSelect').val(),
         topN = $('#topNSelect').val() || 100,
-        order = $('#indexType option:selected').val() || 'desc',
         index = $('#indexSelect option:selected').val();
     // console.log(topN);
     // console.log(index);
-    if(topN > 1000) {
-        alert('最多查询1000个栅格！');
-        return;
-    }
-    if(index == '总用户数' && heatIndexDis == '迪士尼') {
-        ajaxQueryRaster1(timeBegin, timeEnd, topN, index);
-    }else {
-        ajaxQueryRaster(timeBegin, timeEnd, topN, index, order);
-    }
+    ajaxQueryRaster(timeBegin, timeEnd, topN);
 }
 //播放栅格历史
 function playSelectRaster() {
@@ -779,12 +736,7 @@ function beginPlaySelectRaster(){
             rectangleLayer.clearLayers();
             labelRectangleLayer.clearLayers();
             var data = res[count++];
-            var index = $('#indexSelect option:selected').val();
-            if(heatIndexDis == '迪士尼' && index == '总用户数') {
-                drawSelectRaster1(data, index);
-            }else{
-                drawSelectRaster(data, index);
-            }
+            drawSelectRaster(data);
         }else{
             stopPlaySelectRaster();
         }
@@ -800,203 +752,8 @@ function stopPlaySelectRaster() {
 function closeSelectRaster() {
     conditionsUnSelect();
 }
-//栅格右键菜单
-function addContextMenuRaster(){
-    registerContextMenuRasterLayer(rectangleLayer);
-    registerContextMenuRasterLayer(labelRectangleLayer);
-}
-function registerContextMenuRasterLayer(featureGroup) {
-    featureGroup.eachLayer(function (layer) {
-        layer.bindContextMenu({
-            contextmenu: true,
-            contextmenuItems: [
-                {
-                    text: '查看用户趋势 ',
-                    callback: function(){
-                        var gridId = layer.options.gridId;
-                        var index = '总用户数';
-                        if(heatIndexDis == '迪士尼') {
-                            var pageUrl = 'pagesDSN/rasterInfoHW.html?gridId=' + gridId;
-                            callDrawTrendPlot(pageUrl);
-                            return;
-                        }
-                        var pageUrl = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + index;
-                        callDrawTrendPlot(pageUrl);
-                    }
-                },
-                {
-                    separator: true,
-                    index: 1
-                },
-                {
-                    text: '查看流量趋势 ',
-                    callback: function(){
-                        var gridId = layer.options.gridId;
-                        var index = '总流量';
-                        var pageUrl = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + index;
-                        callDrawTrendPlot(pageUrl);
-                    }
-                },
-                {
-                    separator: true,
-                    index: 3
-                },
-                {
-                    text: '查看小区 ',
-                    callback: function(){
-                        var gridId = layer.options.gridId;
-                        var index = layer.options.index;
-                        var minLat = 0,
-                            minLng = 0,
-                            maxLat = 0,
-                            maxLng = 0;
-                        var data = cacheRasterData.playbackRaster[0];
-                        // console.log(data);
-                        if(heatIndexDis == '迪士尼' && index == '总用户数') {
-                            for(var i=0, len=data.length; i<len; ++i) {
-                                var grid_id = data[i].grid_id;
-                                if(gridId != grid_id) continue;
-                                minLat = data[i].lat1;
-                                maxLat = data[i].lat2;
-                                minLng = data[i].lon1;
-                                maxLng = data[i].lon2;
-                                break;
-                            }
-                        }else {
-                            for(var i=0, len=data.length; i<len; ++i) {
-                                var grid_id = data[i].grid;
-                                if(gridId != grid_id) continue;
-                                minLat = parseFloat(data[i].latitude_min);
-                                maxLat = parseFloat(data[i].latitude_max);
-                                minLng = parseFloat(data[i].longitude_min);
-                                maxLng = parseFloat(data[i].longitude_max);
-                                break;
-                            }
-                            // console.log(minLat,maxLat,minLng,maxLng);
-                            //非迪士尼栅格需要坐标转换
-                            if(heatIndexDis != '迪士尼') {
-                                var southWest = wgs84tobd09(minLng,minLat),
-                                    northEast = wgs84tobd09(maxLng,maxLat);
-                                minLat = southWest[1];
-                                minLng = southWest[0];
-                                maxLat = northEast[1];
-                                maxLng = northEast[0];
-                            }
-                        }
-                        // console.log(minLat,maxLat,minLng,maxLng);
-                        var disData = [];//保存落在栅格内的小区维度信息
-                        cacheDimensionDis.map(function(obj) {
-                            var lat = obj.lat,
-                                lng = obj.lng;
-                            if(lat>=minLat && lat<=maxLat && lng>=minLng && lng<=maxLng) {
-                                disData.push(obj);
-                            }
-                        });
-                        // console.log(disData);
-                        $('#disInRaster').css('display','block');
-                        createTableDisInRaster(disData);
-                    }
-                }
-            ]
-        });
-    });
-}
-//查看栅格小区另一种写法，但是不兼容标注右键
-function anotherContext() {
-    rectangleLayer.eachLayer(function (layer) {
-        layer.bindContextMenu({
-            contextmenu: true,
-            contextmenuItems: [
-                {
-                    text: '查看用户趋势 ',
-                    callback: function(){
-                        var gridId = layer.options.gridId;
-                        var index = '总用户数';
-                        if(heatIndexDis == '迪士尼') {
-                            var pageUrl = 'pagesDSN/rasterInfoHW.html?gridId=' + gridId;
-                            callDrawTrendPlot(pageUrl);
-                            return;
-                        }
-                        var pageUrl = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + index;
-                        callDrawTrendPlot(pageUrl);
-                    }
-                },
-                {
-                    separator: true,
-                    index: 1
-                },
-                {
-                    text: '查看流量趋势 ',
-                    callback: function(){
-                        var gridId = layer.options.gridId;
-                        var index = '总流量';
-                        var pageUrl = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + index;
-                        callDrawTrendPlot(pageUrl);
-                    }
-                },
-                {
-                    separator: true,
-                    index: 3
-                },
-                {
-                    text: '查看小区 ',
-                    callback: function(){
-                        var bound = layer.getBounds();
-                        var northEast = bound.getNorthEast(),
-                            southWest = bound.getSouthWest();
-                        var minLat = southWest.lat,
-                            minLng = southWest.lng,
-                            maxLat = northEast.lat,
-                            maxLng = northEast.lng;
-                        var disData = [];//保存落在栅格内的小区维度信息
-                        cacheDimensionDis.map(function(obj) {
-                            var lat = obj.lat,
-                                lng = obj.lng;
-                            if(lat>=minLat && lat<=maxLat && lng>=minLng && lng<=maxLng) {
-                                disData.push(obj);
-                            }
-                        });
-                        // console.log(disData);
-                        $('#disInRaster').css('display','block');
-                        createTableDisInRaster(disData);
-                    }
-                }
-            ]
-        });
-    });
-}
-//创建栅格小区列表TABLE
-function createTableDisInRaster(data) {
-    $('#tableDisInRaster').html('');
-    //表头
-    var htmlStr = '<table><tr>';
-    htmlStr += '<th align="center">' + '小区名称' + '</th>';
-    htmlStr += '<th align="center" style="width: 100px;">' + '小区类型' + '</th>';
-    htmlStr += '</tr>';
-    data.map(function(obj, index){
-        var name = obj.name,
-            type = obj.type;
-        var tepName = name;
-        if(strlen(name) > 22){
-            tepName = name.substring(0,12);
-        }
-        if(index%2 ==0){
-            htmlStr += '<tr style="background: #36648B;">';
-        }else {
-            htmlStr += '<tr>';
-        }
-        htmlStr += '<td align="center" title="' + name + '">' + '<a href="#" onclick="addHeatPopupFromList(\''+name+'\')">' + tepName + '</a>' + '</td>';
-        htmlStr += '<td align="center">' + type + '</td>';
-        htmlStr += '</tr>';
-    });
-    $('#tableDisInRaster').html(htmlStr);
-}
-//隐藏栅格小区列表
-function hideDisInRaster() {
-    $('#disInRaster').css('display','none');
-}
-//在地图上绘制栅格,黄文接口
-function drawSelectRaster1(data, index) {
+//在地图上绘制栅格
+function drawSelectRaster(data) {
     for(var i=0,lenI=data.length; i<lenI; ++i){
         var latMax = parseFloat(data[i].lat2),
             latMin = parseFloat(data[i].lat1),
@@ -1017,12 +774,10 @@ function drawSelectRaster1(data, index) {
         var latlng = boundsValue.getCenter();
         var dataVal = data[i].pf_stock;
         var gridId = data[i].grid_id;
-        var fillColor = setRectangleColor(dataVal, index);
+        var fillColor = setRectangleColor(dataVal);
         //创建栅格
         var rasterPolygon = L.rectangle(boundsValue, {
             fill: true,
-            gridId: gridId,
-            index: index,
             fillColor: fillColor,
             fillOpacity: 0.4,
             weight: 1,
@@ -1030,45 +785,40 @@ function drawSelectRaster1(data, index) {
         })
             .addTo(rectangleLayer);
         var lenDataVal = dataVal.toString().length;
-
-        var iconUrl = 'images/testBack.png';
-        var sizePoint = new L.Point(0.001, 0.001);
-        var anchorPoint = new L.Point(0, 1);
-        var wraperPoint = new L.Point(12, 13);
         //创建标注
         if(lenDataVal > 2){
             var SweetIcon = L.Icon.Label.extend({
                 options: {
-                    iconUrl: iconUrl,
+                    iconUrl: 'images/testBack.png',
                     shadowUrl: null,
-                    iconSize: sizePoint,
-                    iconAnchor: anchorPoint,
-                    labelAnchor: new L.Point(-6, 0),
-                    wrapperAnchor: wraperPoint,
+                    iconSize: new L.Point(0.001, 0.001),
+                    iconAnchor: new L.Point(0, 1),
+                    labelAnchor: new L.Point(-10, 0),
+                    wrapperAnchor: new L.Point(12, 13),
                     labelClassName: 'sweet-deal-label'
                 }
             });
         }else if(lenDataVal > 1){
             var SweetIcon = L.Icon.Label.extend({
                 options: {
-                    iconUrl: iconUrl,
+                    iconUrl: 'images/testBack.png',
                     shadowUrl: null,
-                    iconSize: sizePoint,
-                    iconAnchor: anchorPoint,
-                    labelAnchor: new L.Point(-3, 0),
-                    wrapperAnchor: wraperPoint,
+                    iconSize: new L.Point(0.001, 0.001),
+                    iconAnchor: new L.Point(0, 1),
+                    labelAnchor: new L.Point(-5, 0),
+                    wrapperAnchor: new L.Point(12, 13),
                     labelClassName: 'sweet-deal-label'
                 }
             });
         }else{
             var SweetIcon = L.Icon.Label.extend({
                 options: {
-                    iconUrl: iconUrl,
+                    iconUrl: 'images/testBack.png',
                     shadowUrl: null,
-                    iconSize: sizePoint,
-                    iconAnchor: anchorPoint,
+                    iconSize: new L.Point(0.001, 0.001),
+                    iconAnchor: new L.Point(0, 1),
                     labelAnchor: new L.Point(2, 0),
-                    wrapperAnchor: wraperPoint,
+                    wrapperAnchor: new L.Point(12, 13),
                     labelClassName: 'sweet-deal-label'
                 }
             });                     
@@ -1076,27 +826,13 @@ function drawSelectRaster1(data, index) {
         var labelMarker = new L.Marker(
             latlng,
             { 
-                icon: new SweetIcon({labelText: dataVal}), 
-                title: gridId,
-                gridId: gridId,
-                index: index
+                icon: new SweetIcon({labelText: dataVal}), title: gridId
             }
         ).addTo(labelRectangleLayer);
     }
-    addContextMenuRaster();
 }
-//根据缩放级别修改标注字体大小
-function changeLabelClassDynamic() {
-    labelRectangleLayer.eachLayer(function(layer) {
-        var icon = layer.options.icon;
-        var options = icon.options;
-        options.labelClassName = 'sweet-deal-labelBig';
-    });
-    map.removeLayer(labelRectangleLayer);
-    map.addLayer(labelRectangleLayer);
-}
-//根据页面条件ajax查询栅格,黄文接口
-function ajaxQueryRaster1(startTime, endTime, topN, index) {
+//根据页面条件ajax查询栅格
+function ajaxQueryRaster(startTime, endTime, topN) {
     // var url = 'http://' + baseUrl + ':'+basePort+'/services/ws/fast_query/area/pm/gridPf';
     var url = 'http://' + baseUrl + ':' + basePort + '/services/ws/fast_query/area/pm/gridTopN?startTime=' + startTime + '&endTime=' + endTime + '&topN=' + topN;
     //console.log(url);
@@ -1124,19 +860,19 @@ function ajaxQueryRaster1(startTime, endTime, topN, index) {
             // console.log(timeUniqueArr);
             //根据时间分组数据
             var timeGroup = [];
-            timeUniqueArr.map(function(val,index1) {
-                timeGroup[index1] = [];
+            timeUniqueArr.map(function(val,index) {
+                timeGroup[index] = [];
                 data.map(function(obj) {
                     var time = obj.time;
                     if(time == val) {
-                        timeGroup[index1].push(obj);
+                        timeGroup[index].push(obj);
                     }
                 });
             });
             // console.log(timeGroup);
             //绘制最近时间的栅格
             var lengh = timeGroup.length;
-            drawSelectRaster1(timeGroup[lengh-1],index);
+            drawSelectRaster(timeGroup[lengh-1]);
             // timeGroup[lengh-1].map(function(obj) {
             //     var latMax = parseFloat(obj.lat2),
             //         latMin = parseFloat(obj.lat1),
@@ -1168,219 +904,6 @@ function ajaxQueryRaster1(startTime, endTime, topN, index) {
             //     })
             //         .addTo(rectangleLayer);
             // });
-            //设置中心点
-            var pointObj = timeGroup[lengh-1][0];
-            if(pointObj) {
-                // console.log(pointObj);
-                var lat = parseFloat(pointObj.lat1),
-                    lng = parseFloat(pointObj.lon1);
-                map.setView([lat,lng],17);
-            } 
-            //缓存全部栅格数据
-            cacheRasterData.playbackRaster = timeGroup;
-        });
-}
-//在地图上绘制栅格,娄尧嘉接口
-function drawSelectRaster(data,index) {
-    // console.log(data);
-    for(var i=0,lenI=data.length; i<lenI; ++i){
-        var latMax = parseFloat(data[i].latitude_max),
-            latMin = parseFloat(data[i].latitude_min),
-            lngMax = parseFloat(data[i].longitude_max),
-            lngMin = parseFloat(data[i].longitude_min);
-        if(!isNumber(latMin) || !isNumber(latMax) || !isNumber(lngMin) || !isNumber(lngMax)){
-            continue;
-        }
-        if(heatIndexDis != '迪士尼') {
-            var minBd = wgs84tobd09(lngMin,latMin),
-                maxBd = wgs84tobd09(lngMax,latMax);
-            //坐标转换
-            var southWestValue = L.latLng(minBd[1], minBd[0]),
-                northEastValue = L.latLng(maxBd[1], maxBd[0]);
-        }else {
-            //坐标不转换
-            var southWestValue = L.latLng(latMin, lngMin),
-                northEastValue = L.latLng(latMax, lngMax);
-        }
-        
-        boundsValue = L.latLngBounds(southWestValue, northEastValue);
-        var latlng = boundsValue.getCenter();
-        var dataVal = parseInt(data[i][index]);
-        if(index.indexOf('流量') != -1) {
-            dataVal = (dataVal/1024).toFixed(1);
-            if(dataVal == 0.0) {
-                dataVal = 0;
-            }
-        }
-        var gridId = data[i].grid;
-        var fillColor = setRectangleColor(dataVal,index);
-        //创建栅格
-        var rasterPolygon = L.rectangle(boundsValue, {
-            fill: true,
-            fillColor: fillColor,
-            gridId: gridId,
-            index: index,
-            fillOpacity: 0.4,
-            weight: 1,
-            color: fillColor
-        })
-            .addTo(rectangleLayer);
-        var lenDataVal = dataVal.toString().length;
-
-        var iconUrl = 'images/testBack.png';
-        var sizePoint = new L.Point(0.001, 0.001);
-        var anchorPoint = new L.Point(0, 1);
-        var wraperPoint = new L.Point(12, 13);
-        //创建标注
-        if(heatIndexDis == '迪士尼') {
-            if(lenDataVal > 6) {
-                var SweetIcon = L.Icon.Label.extend({
-                    options: {
-                        iconUrl: iconUrl,
-                        shadowUrl: null,
-                        iconSize: sizePoint,
-                        iconAnchor: anchorPoint,
-                        labelAnchor: new L.Point(-20, 0),
-                        wrapperAnchor: wraperPoint,
-                        labelClassName: 'sweet-deal-label'
-                    }
-                });
-            }else if(lenDataVal > 4){
-                var SweetIcon = L.Icon.Label.extend({
-                    options: {
-                        iconUrl: iconUrl,
-                        shadowUrl: null,
-                        iconSize: sizePoint,
-                        iconAnchor: anchorPoint,
-                        labelAnchor: new L.Point(-10, 0),
-                        wrapperAnchor: wraperPoint,
-                        labelClassName: 'sweet-deal-label'
-                    }
-                });
-            }else if(lenDataVal > 2){
-                var SweetIcon = L.Icon.Label.extend({
-                    options: {
-                        iconUrl: iconUrl,
-                        shadowUrl: null,
-                        iconSize: sizePoint,
-                        iconAnchor: anchorPoint,
-                        labelAnchor: new L.Point(-5, 0),
-                        wrapperAnchor: wraperPoint,
-                        labelClassName: 'sweet-deal-label'
-                    }
-                });
-            }else{
-                var SweetIcon = L.Icon.Label.extend({
-                    options: {
-                        iconUrl: iconUrl,
-                        shadowUrl: null,
-                        iconSize: sizePoint,
-                        iconAnchor: new L.Point(0, 1),
-                        labelAnchor: new L.Point(2, 0),
-                        wrapperAnchor: wraperPoint,
-                        labelClassName: 'sweet-deal-label'
-                    }
-                });
-            }   
-        }else {
-            if(lenDataVal > 2) {
-                var SweetIcon = L.Icon.Label.extend({
-                    options: {
-                        iconUrl: iconUrl,
-                        shadowUrl: null,
-                        iconSize: sizePoint,
-                        iconAnchor: new L.Point(0, 1),
-                        labelAnchor: new L.Point(-21, 0),
-                        wrapperAnchor: new L.Point(25, 25),
-                        labelClassName: 'sweet-deal-label'
-                    }
-                });
-            }else {
-                var SweetIcon = L.Icon.Label.extend({
-                    options: {
-                        iconUrl: iconUrl,
-                        shadowUrl: null,
-                        iconSize: sizePoint,
-                        iconAnchor: new L.Point(0, 1),
-                        labelAnchor: new L.Point(10, 0),
-                        wrapperAnchor: new L.Point(25, 25),
-                        labelClassName: 'sweet-deal-label'
-                    }
-                });
-            }
-            
-        }
-        
-        var labelMarker = new L.Marker(
-            latlng,
-            { 
-                icon: new SweetIcon({labelText: dataVal}), 
-                title: gridId,
-                gridId: gridId,
-                index: index
-            }
-        ).addTo(labelRectangleLayer);
-    }
-    addContextMenuRaster();
-}
-//根据页面条件ajax查询栅格,娄尧嘉接口
-function ajaxQueryRaster(startTime, endTime, topN, index, order) {
-    startTime += ':00';
-    endTime += ':00';
-    var type = 'DEFAULT';
-    if(heatIndexDis == '迪士尼') type = 'DISNEY';
-    var url = 'http://' + baseUrl + ':' + basePort + '/stream/rank/grids?timeBegin=' + startTime + '&timeEnd=' + endTime + '&num=' + topN + '&type=' + type + '&sortKey=' + encodeURIComponent(index) + '&order=' + order;
-    // var url = 'http://10.221.247.7:8299/stream/rank/grids?timeBegin=2017-03-06%2016:25:42&timeEnd=2017-03-06%2017:40:42&num=100&type=DISNEY';
-    //console.log(url);
-    $.ajax({
-        url: url,
-        type: 'GET',
-        dataType: 'json',
-        data: {},
-        beforeSend: function(XMLHttpRequest){
-            document.getElementById('loading').style.visibility = 'visible';
-            $('#loading').html("<img src='images/loading.gif' />");
-        },
-        complete: function(XMLHttpRequest,textStatus){
-            document.getElementById('loading').style.visibility = 'hidden';
-            $('#loading').empty();
-        }
-    })
-        .done(function(data) {
-            if(!data.length) return;
-            //获取所有时间
-            var timeArr = data.map(function(obj) {
-                return obj.time;
-            });
-            var timeUniqueArr = timeArr.unique2();
-            // console.log(timeUniqueArr);
-            //根据时间分组数据
-            var timeGroup = [];
-            timeUniqueArr.map(function(val,index1) {
-                timeGroup[index1] = [];
-                data.map(function(obj) {
-                    var time = obj.time;
-                    if(time == val) {
-                        timeGroup[index1].push(obj);
-                    }
-                });
-            });
-            // console.log(timeGroup);
-            //绘制最近时间的栅格
-            var lengh = timeGroup.length;
-            drawSelectRaster(timeGroup[lengh-1], index);
-            //设置中心点
-            var pointObj = timeGroup[lengh-1][0];
-            if(pointObj) {
-                var lat = parseFloat(pointObj.latitude_max),
-                    lng = parseFloat(pointObj.longitude_max)
-                    level = 16;
-                if(heatIndexDis == '迪士尼') {
-                    level = 17;
-                }
-                map.setView([lat,lng], level);
-            }
-            //缓存全部栅格数据
             cacheRasterData.playbackRaster = timeGroup;
         });
 }
@@ -1454,7 +977,7 @@ function rerenderHeatMap(){
     //console.log(map.latLngToContainerPoint([30.91350,121.4]));
     var curZoom = map.getZoom();
     //栅格相关
-    if(curZoom > 14){
+    if(curZoom > 16){
         if(map.hasLayer(rectangleLayer)){
             if(!map.hasLayer(labelRectangleLayer)){
                 map.addLayer(labelRectangleLayer);
@@ -1994,46 +1517,25 @@ function callListFromXiaoQu(){
 //框选到的小区定位
 function addHeatPopupFromList(str,indexName) {
     temLayer && (map.removeLayer(temLayer), temLayer.clearLayers());
-    var lengthRows = cacheDimensionDis.length;
+    var lengthRows = detailedInfoVector.length;
     for(var i=0; i<lengthRows; i++){
-        var cellName = cacheDimensionDis[i].name;
+        var cellName = detailedInfoVector[i].name;
         if(cellName === str){
-            var point = cacheDimensionDis[i].point;
-            var typeMarker = cacheDimensionDis[i].type;
-            var lacci = cacheDimensionDis[i].lacci;
-            var popupContent = cacheDimensionDis[i].name;
-            var hotId = cacheDimensionDis[i].hot_id;
+            var point = detailedInfoVector[i].point;
+            var typeMarker = detailedInfoVector[i].type;
+            var lacci = detailedInfoVector[i].lacci;
+            var popupContent = detailedInfoVector[i].name;
             //为小区绑定popup
             var heatPopup = L.popup({maxWidth:800,maxHeight:800,offset:L.point(0, 5),closeButton:true, closeOnClick:false})
                 .setLatLng(point);
             //heatPopup.setContent('<iframe width="480px" frameborder=no height="290px" src='+"pagesDSN/sitePieCharts.html?lacci="+lacci+"&hotspot="+encodeURIComponent(heatIndexDis) + "&name=" + encodeURIComponent(popupContent) +'></iframe>');
-            heatPopup.setContent('<iframe width="680px" frameborder=no height="460px" src='+"pagesDSN/sitePieChartsBig.html?lacci="+lacci+"&hotspot="+encodeURIComponent(heatIndexDis) + "&name=" + encodeURIComponent(popupContent)+ "&hotid=" + encodeURIComponent(hotId) + "&end=" + '></iframe>');
-
-            var heatPopup4G = L.popup({maxWidth:800,maxHeight:800,offset:L.point(0, 5),closeButton:true, closeOnClick:false})
-                .setLatLng(point);
-            //heatPopup.setContent('<iframe width="480px" frameborder=no height="290px" src='+"pagesDSN/sitePieCharts.html?lacci="+lacci+"&hotspot="+encodeURIComponent(hotspot) + "&name=" + encodeURIComponent(name) +'></iframe>');
-            heatPopup4G.setContent('<iframe width="680px" frameborder=no height="460px" src='+"pagesDSN/sitePieChartsBig.html?lacci="+lacci+"&hotspot="+encodeURIComponent(heatIndexDis) + "&name=" + encodeURIComponent(popupContent)+ "&hotid=" + encodeURIComponent(hotId) + "&end=" + '&type=' + encodeURIComponent(typeMarker) + "&endType=" + '></iframe>');
-            var heatPopup3G = L.popup({maxWidth:800,maxHeight:800,offset:L.point(0, 5),closeButton:true, closeOnClick:false})
-                .setLatLng(point);
-            //heatPopup.setContent('<iframe width="480px" frameborder=no height="290px" src='+"pagesDSN/sitePieCharts.html?lacci="+lacci+"&hotspot="+encodeURIComponent(hotspot) + "&name=" + encodeURIComponent(name) +'></iframe>');
-            heatPopup3G.setContent('<iframe width="680px" frameborder=no height="460px" src='+"pagesDSN/sitePieChartsBig23G.html?lacci="+lacci+"&hotspot="+encodeURIComponent(heatIndexDis) + "&name=" + encodeURIComponent(popupContent)+ "&hotid=" + encodeURIComponent(hotId) + "&end=" + '&type=' + encodeURIComponent(typeMarker) + "&endType=" + '></iframe>');
-            
+            heatPopup.setContent('<iframe width="680px" frameborder=no height="460px" src='+"pagesDSN/sitePieChartsBig.html?lacci="+lacci+"&hotspot="+encodeURIComponent(heatIndexDis) + "&name=" + encodeURIComponent(popupContent)+ "&hotid=" + encodeURIComponent('') + "&end=" + '></iframe>');
 
             var marker = L.marker(point,{title: cellName,riseOnHover:true, icon: createLocatedMarkers(typeMarker)});
-            // marker.bindPopup(heatPopup);
-            if(typeMarker == '4G') {
-                marker.bindPopup(heatPopup4G);
-            }else {
-                marker.bindPopup(heatPopup3G);
-            }
+            marker.bindPopup(heatPopup);
             temLayer.addLayer(marker);
-            var level = 17;
-            if(heatIndexDis == '迪士尼') {
-                level = 19;
-            }
-            map.setView(point,level);
+            map.setView(point,17);
             map.addLayer(temLayer);
-            switchControl.addOverlay(temLayer,"定位图层",'业务')
             return;
         }
     }
@@ -2374,8 +1876,7 @@ function addXQ2Map(str,flag,isSmallScreen){
     var urlCluster = 'http://' + baseUrl + ':'+basePort+'/services/ws/fast_query/area/re/re_cellByHotname?hotspot=' + encodeURIComponent(str);//迪士尼
     //console.log(urlCluster);
     addMarkerClusters(urlCluster,str,flag,isSmallScreen);
-    // str === '迪士尼' && (addRectangleLayer());//添加真实栅格
-    addRectangleLayer();
+    str === '迪士尼' && (addRectangleLayer());//添加真实栅格
 }
 function addMarkerClusters1(url,hotspot,flag){
     var heatMap = []; //全局变量,存放热点图的数据
@@ -2455,18 +1956,16 @@ function removeAllLayers() {
     districtsLayer && (map.removeLayer(districtsLayer),districtsLayer.clearLayers());
     sectorLayer && (map.removeLayer(sectorLayer),sectorLayer.clearLayers(),switchControl.removeLayer(sectorLayer));
     markerClusters && (map.removeLayer(markerClusters),markerClusters.clearLayers(),switchControl.removeLayer(markerClusters));
-    temLayer && (map.removeLayer(temLayer),temLayer.clearLayers(),switchControl.removeLayer(temLayer));
+    temLayer && (map.removeLayer(temLayer),temLayer.clearLayers());
     markersLayerWarning && (map.removeLayer(markersLayerWarning),markersLayerWarning.clearLayers(),switchControl.removeLayer(markersLayerWarning));
     rectangleLayer && (map.removeLayer(rectangleLayer),rectangleLayer.clearLayers(),switchControl.removeLayer(rectangleLayer));
     labelRectangleLayer && (map.removeLayer(labelRectangleLayer),labelRectangleLayer.clearLayers(),switchControl.removeLayer(labelRectangleLayer));
-    document.getElementById('trendPlotFromChild').style.visibility = 'hidden'; 
-    hideDisInRaster();
+     
 }
 function beginRefresh(hotspot,flag,isSmallScreen) {
     removeAllLayers();
 
-    // hotspot === '迪士尼' && (addRectangleLayer());//添加真实栅格
-    addRectangleLayer();
+    hotspot === '迪士尼' && (addRectangleLayer());//添加真实栅格
     beginAddXQ(cacheDimensionDis,hotspot);
     addResultNow(cacheDimensionDis,hotspot,flag);
 }
@@ -2576,8 +2075,12 @@ function addMarkerClusters(url,hotspot,flag,isSmallScreen){
                             name: name,
                             lat: point[0],
                             lng: point[1],
+                            latW: latHeatMap,
+                            lngW: lngHeatMap,
                             type: type,
                             hot_id: hot_id,
+                            lacN: lac,
+                            ciN: ci,
                             cellType: cellType,
                             hori_direc_angle: beginAngle,
                             mechanical_dip_angle: endAngle
@@ -2874,7 +2377,7 @@ function beginAddXQ(arr,hotspot){
     //console.log(center);
     map.panTo(center,{});
     console.time('addLayers');
-    // map.addLayer(markersLayer4G);
+    map.addLayer(markersLayer4G);
     console.timeEnd('addLayers');
     switchControl.addOverlay(markersLayer4G,"4G小区",'业务');
     switchControl.addOverlay(markersLayer3G,"3G小区",'业务');
@@ -4236,7 +3739,7 @@ function closeNetWorkScaleDiv(){
     document.getElementById('netWorkScale').style.visibility = 'hidden';
 }
 //添加真实栅格
-function addRectangleLayer1(){
+function addRectangleLayer(){
     var url = 'http://' + baseUrl + ':'+basePort+'/services/ws/fast_query/area/pm/gridPf';
     //console.log(url);
     $.ajax({
@@ -4256,6 +3759,7 @@ function addRectangleLayer1(){
         .done(function(data){
             if(!data.length) return;
             console.log('栅格数量:' + data.length);
+
             for(var i=0,lenI=data.length; i<lenI; ++i){
                 var latMax = parseFloat(data[i].lat2),
                     latMin = parseFloat(data[i].lat1),
@@ -4277,6 +3781,8 @@ function addRectangleLayer1(){
                 var dataVal = data[i].pf_stock;
                 var gridId = data[i].grid_id;
                 var fillColor = setRectangleColor(dataVal);
+                var gridObj = {id: gridId, pos: [{y: lngMin, x: latMin}, {y: lngMax, x: latMin}, {y: lngMax, x: latMax}, {y: lngMin, x: latMax},{y: lngMin, x: latMin}]};
+                cacheRasterData.playbackRaster.push(gridObj);
                 //创建栅格
                 var rasterPolygon = L.rectangle(boundsValue, {
                     fill: true,
@@ -4340,13 +3846,61 @@ function addRectangleLayer1(){
                 var layer = e.layer;
                 rectangleLayerIndexTrend(layer);
             });
+            // console.log(cacheDimensionDis);
         });
 }
-function addRectangleLayer() {
+function beginCal() {
+    console.log(cacheRasterData.playbackRaster);
+    var htmlStr = '';
+    var arr = [];
+    var arr2 = [];
+    detailedInfoVector.map(function(obj){
+        
+        var lac = obj.lacN,
+            ci = obj.ciN,
+            type = obj.type,
+            name = obj.name;
+        var lat = obj.lat,
+            lng = obj.lng;
+        var latW = obj.latW,
+            lngW = obj.lngW;
+        var bdPoint = wgs84tobd09(lngW,latW);
+        // var point = {x: lat, y: lng};
+        var point = {x: bdPoint[1], y: bdPoint[0]};
+        for(var i=0, lenI=cacheRasterData.playbackRaster.length; i<lenI; ++i) {
+            var objR = cacheRasterData.playbackRaster[i];
+            var polygon = objR.pos,
+                gridId = objR.id;
+            if(PointInPoly(point, polygon)) {
+                htmlStr += gridId + ',';
+                htmlStr += name + ',' + type + ',' + lac + ',' + ci;
+                htmlStr += '\n';
+                arr.push(name);
+                return;
+            }  
+        }
+        arr2.push(name);
+        // cacheRasterData.playbackRaster.map(function(objR){
+        //     var polygon = objR.pos;
+        //     var gridId = objR.id;
+        //     // console.log(polygon);
+        //     if(PointInPoly(point, polygon)) {
+        //         htmlStr += gridId + ',';
+        //         htmlStr += name + ',' + type + ',' + lac + ',' + ci;
+        //         htmlStr += '\n';
+        //         arr.push(name);
+        //         return;
+        //     }            
+        // });
+        
+    });
+    $('#infos').html(htmlStr);
+    console.log(detailedInfoVector);
+    console.log(arr);
+    console.log(arr2);
+}
+function addRectangleLayer2() {
     switchControl.addOverlay(rectangleLayer,'栅格图层','业务');
-    map.addLayer(rectangleLayer);
-    conditionsSelect();
-    querySelectRaster();
 }
 //栅格指标趋势图
 function rectangleLayerIndexTrend(layer){
@@ -4355,33 +3909,13 @@ function rectangleLayerIndexTrend(layer){
     callDrawTrendPlot(pageUrl);
 }
 //获取栅格颜色
-function setRectangleColor(dataVal, index){
-    var color = '';
-    if(!index || index == '总用户数'){
-        color = setUsersColorRaster(dataVal);
-    }else if(index == '总流量') {
-        color = setDataColorRaster(dataVal);
-    }
-    return color;
-}
-function setUsersColorRaster(dataVal) {
+function setRectangleColor(dataVal){
     var color = 'gray';
     if(dataVal > 50 && dataVal <= 125){
         color = 'yellow';
     }else if(dataVal > 125 && dataVal <= 250){
         color = 'orange';
     }else if(dataVal > 250){
-        color = 'red';
-    }
-    return color;
-}
-function setDataColorRaster(dataVal) {
-    var color = 'gray';
-    if(dataVal > 0 && dataVal <= 10){
-        color = 'yellow';
-    }else if(dataVal > 10 && dataVal <= 50){
-        color = 'orange';
-    }else if(dataVal > 50){
         color = 'red';
     }
     return color;

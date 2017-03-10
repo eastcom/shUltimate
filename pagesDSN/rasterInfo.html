@@ -40,9 +40,16 @@
             echarts: '../echarts/build/dist'
         }
     });
+    //基本URL
     var baseUrl = '10.221.247.7';
     var locationUrl = window.location.href;
     locationUrl.indexOf('10.10.46.60') !== -1 && (baseUrl = '10.10.46.60');
+    var hostName = window.location.hostname;
+    hostName != '' && (baseUrl = hostName); 
+    //基本端口号
+    var basePort = '8080';
+    var locationPort = window.location.port;                
+    locationPort != '' && (basePort = locationPort);
     //解决跨域请求数据问题
     jQuery.support.cors = true;
     jQuery.ajaxSetup({ scriptCharset: "utf-8" , contentType: "application/json; charset=utf-8"});
@@ -364,10 +371,15 @@
             $('#divWhoise').hide();
         });
     }
-    function callServer(gridId){
+    function callServer(gridId, index){
+        var legend = '用户数（人）';
+        if(index.indexOf('流量') != -1) {
+            legend = '流量（MB）';
+        }
         var timeStart = getCurrentTimeHour(3);
         var timeEnd = getCurrentTimeMin(0);
-        var userUrl = 'http://' + baseUrl + ':8080/services/ws/fast_query/area/a/gridPfTrend?startTime=' + timeStart + '&endTime=' + timeEnd + '&grid_id=' + gridId;
+        // var userUrl = 'http://' + baseUrl + ':8080/services/ws/fast_query/area/a/gridPfTrend?startTime=' + timeStart + '&endTime=' + timeEnd + '&grid_id=' + gridId;
+        var userUrl = 'http://' + baseUrl + ':' + basePort + '/stream/union/grid-times?grid=' + gridId + '&timeBegin=' + timeStart + '&timeEnd=' + timeEnd + '&order=asc' ;
         $.ajax({
             url: userUrl,
             type: 'get',
@@ -380,7 +392,11 @@
                     var target = data;
                     for(var i= 0,lenI=target.length; i<lenI; ++i){
                         timeArr.push(target[i].time.substring(11,16));
-                        userArr.push(target[i]['pf_stock']);
+                        var dataVal = target[i][index];
+                        if(index.indexOf('流量') != -1) {
+                            dataVal = (dataVal/1024).toFixed(2);
+                        }
+                        userArr.push(dataVal);
                         //dataArr.push((target[i]['总流量']/1024).toFixed(2));
                     }
                     //timeArr.reverse();
@@ -414,7 +430,7 @@
                                         },
                                         y: 'bottom',
                                         x: 'center',
-                                        data:['用户数']
+                                        data:[index]
                                     },
                                     calculable : true,
                                     grid: {
@@ -442,13 +458,13 @@
                                                     type: 'solid'
                                                 }
                                             },
-                                            data : timeArr
+                                            data : timeArr.reverse()
                                         }
                                     ],
                                     yAxis : [
                                         {
                                             type : 'value',
-                                            name:'用户数(人)',
+                                            name: legend,
                                             axisLabel: {
                                                 textStyle: {
                                                     fontSize: 20,
@@ -472,7 +488,7 @@
                                     ],
                                     series : [
                                         {
-                                            'name':'用户数',
+                                            'name':index,
                                             'type':'line',
                                             itemStyle: {
                                                 normal: {
@@ -485,7 +501,7 @@
                                                     width: 1
                                                 }
                                             },
-                                            'data': userArr
+                                            'data': userArr.reverse()
                                         }
                                     ]
                                 };
@@ -537,13 +553,14 @@
         window.parent.closeTrendPlot();
     }
     function maxTrendPlotParent(){
-        var str = "pagesDSN/rasterInfoBig.html?gridId="+gridId;
+        var str = "pagesDSN/rasterInfoBig.html?gridId="+gridId + "&index=" + index;
         window.parent.callDrawTrendPlotBig(str);
     }
     var nameVal = getUrlParam(locationUrl,'');
     var gridId = nameVal.gridId;
+    var index = nameVal.index;
     //var gridId = 'X001Y039';
-    callServer(gridId);
+    callServer(gridId, index);
     //callServer('中国博览会','腾讯新闻');
 </script>
 </body>
