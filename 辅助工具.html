@@ -15,6 +15,9 @@
 	#pointInfos {
 		position: absolute; right: 100px; top: 50px; width: 300px; height: 400px; z-index: 99;
 	}
+	#infoLocation {
+		position: absolute; left: 10px; bottom: 10px;
+	}
 </style>
 <script>
 	Array.prototype.unique2 = function() {
@@ -51,9 +54,10 @@
 </head>
 <body>
 	<div id="map"></div>
-	<!-- <div>
+	<div>
 		<textarea id="pointInfos"></textarea>
-	</div> -->
+	</div>
+	<div id="infoLocation"></div>
 	<script>
 		var TOOLS = {
 			map: null,
@@ -69,8 +73,8 @@
 		$(document).ready(function() {
 			initMap();
 			mapStation(station_84);
-			// mapRailway(railway_bd);
-			drawPolyline(railway_bd);
+			mapRailway(railway_bd);
+			// drawPolyline(railway_bd);
 			// checkNameMissed(station_84,railway_bd);
 		});
 		function initMap() {
@@ -93,8 +97,9 @@
 				"地图": normalLayer,
 				"卫星": satelliteLayer
 			};
-			var switchControl = L.control.layers(baseLayers, [],{autoZIndex:false,position:'topright'}).addTo(TOOLS.map);
+			var switchControl = L.control.layers(baseLayers, {},{autoZIndex:false,position:'topright'}).addTo(TOOLS.map);
 			addDrawControl();
+			showMousePos();
 		}
 		function addDrawControl() {
 			var drawControl = new L.Control.Draw({
@@ -125,6 +130,12 @@
 			});
 			TOOLS.map.addControl(drawControl);
 			registerDrawDone();
+		}
+		function showMousePos() {
+			TOOLS.map.on('mousemove', function(e) {
+				var latlng = e.latlng;
+				document.getElementById("infoLocation").innerHTML = "纬度：" + latlng.lat.toString() + "，" + "经度：" + latlng.lng.toString();
+			});
 		}
 		function registerDrawDone() {
 			TOOLS.map.on('draw:created', function(e) {
@@ -205,8 +216,9 @@
 					}
 				});
 				L.polyline(points,{weight: 40, lineCap: 'round', lineJoin: 'round'}).bindPopup(val).addTo(TOOLS.layers.polylineLayer);
-				TOOLS.map.addLayer(TOOLS.layers.polylineLayer);
+				
 			});
+			TOOLS.map.addLayer(TOOLS.layers.polylineLayer);
 		}
 		function checkNameMissed(ori_data,pro_data) {
 			ori_data.map(function(obj) {

@@ -541,7 +541,7 @@
         window.parent.callDrawTrendPlotBig(str);
     }
     var nameVal = getUrlParam(locationUrl,'');
-    var gridId = nameVal.gridId;
+    var gridId = decodeURIComponent(nameVal.gridId);
     //var gridId = 'X001Y039';
     callServer(gridId);
     //callServer('中国博览会','腾讯新闻');

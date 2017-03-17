@@ -715,7 +715,7 @@ function checkDomById(id) {
 }
 //初始化日历控件
 function initTimeControl() {
-    var current = getCurrentTimeMin(60);
+    var current = getCurrentTimeMin(20);
     $('#timeBeginSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true, current: current});
     $('#timeEndSelect').appendDtpicker({minuteInterval: 15, locale: 'cn', todayButton: true});
 }
@@ -723,12 +723,17 @@ function initTimeControl() {
 function conditionsSelect() {
     $('#conditionsSelect').css('display', 'block');
     $('.datepicker').parent().show();
-    var timeBegin = getCurrentTimeMin(60);
-    var timeEnd = getCurrentTimeMin(0);
+    resetTime();
+    //防止图层控制器隐藏栅格后再显示时标注不出现
+    rerenderHeatMap();
+}
+function resetTime() {
+    var timeBegin = getCurrentTimeMin(20);
+    var timeEnd = getCurrentTimeMin(15);
     $('#timeBeginSelect').val(timeBegin.substring(0,16));
     $('#timeEndSelect').val(timeEnd.substring(0,16));
-
-    rerenderHeatMap();
+    //设置时间粒度为5分钟
+    $('#timeIntervalSelect').val('05');
 }
 //隐藏栅格查询条件DIV
 function conditionsUnSelect() {
@@ -744,21 +749,71 @@ function querySelectRaster() {
     hideDisInRaster();
 
     var timeBegin = $('#timeBeginSelect').val(),
-        timeEnd = $('#timeEndSelect').val(),
+        timeEnd = $('#timeEndSelect').val();
+    if(timeEnd < timeBegin) {
+        timeBegin = timeEnd;
+    }
+    // console.log(timeBegin,timeEnd);
+    var timeInterval = $('#timeIntervalSelect option:selected').val() || '05',
         topN = $('#topNSelect').val() || 100,
         order = $('#indexType option:selected').val() || 'desc',
         index = $('#indexSelect option:selected').val();
     // console.log(topN);
-    // console.log(index);
+    console.log(timeInterval);
     if(topN > 1000) {
         alert('最多查询1000个栅格！');
         return;
     }
     if(index == '总用户数' && heatIndexDis == '迪士尼') {
-        ajaxQueryRaster1(timeBegin, timeEnd, topN, index);
+        ajaxQueryRaster1(timeBegin, timeEnd, topN, index, timeInterval);
     }else {
-        ajaxQueryRaster(timeBegin, timeEnd, topN, index, order);
+        ajaxQueryRaster(timeBegin, timeEnd, topN, index, order, timeInterval);
     }
+}
+//是否禁用播放按钮
+function showPlayButton(self) {
+    if(self.checked) {
+        // $('#playSelect')[0].style.visibility = 'visible';
+        $('#playSelect')[0].disabled = false;
+        $('#timeEndDiv').css('display','block');
+        $('#timeInterval').css('display','block');
+        $('#modifyTimeName').text('结束时间：');
+    }else {
+        // $('#playSelect')[0].style.visibility = 'hidden';
+        $('#playSelect')[0].disabled = true;
+        $('#timeEndDiv').css('display','none');
+        $('#timeInterval').css('display','none');
+        $('#modifyTimeName').html('时间：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+        //禁用时强制停止播放
+        stopPlaySelectRaster();
+    }
+    resetTime();
+}
+//最小化conditionsSelect容器
+function minimizeConditionsSelect() {
+    var title = $('#conditionsSelect').children().eq(0).find('img').attr('title');
+    // console.log(title);
+    if(title == '最小化') {
+        $('#conditionsSelect').children().each(function(i,ele) {
+            if(i == 0) {
+                $(this).find('img').attr('title', '最大化');
+                $(this).find('img').attr('src', 'images/returnNormal.png');
+                return;
+            };
+            $(this).css('display', 'none');
+        });
+    }else {
+        $('#conditionsSelect').children().each(function(i,ele) {
+            if(i == 0) {
+                $(this).find('img').attr('title', '最小化');
+                $(this).find('img').attr('src', 'images/minimize.jpg');
+                return;
+            };
+            $(this).css('display', 'block');
+        });
+        showPlayButton($('#playOrNot')[0]);
+    }
+    
 }
 //播放栅格历史
 function playSelectRaster() {
@@ -789,12 +844,24 @@ function beginPlaySelectRaster(){
             stopPlaySelectRaster();
         }
         // console.log('not finished yet!');
-    }, 2000);
+    }, 1000*3);
 }
 //停止播放
 function stopPlaySelectRaster() {
     clearInterval(cacheRasterData.timer);
     $('#playSelect').val('播 放');
+    //还原到最近时间
+    rectangleLayer.clearLayers();
+    labelRectangleLayer.clearLayers();
+
+    var index = $('#indexSelect option:selected').val();
+    var data = cacheRasterData.playbackRaster;
+    var len = data.length - 1;
+    if(heatIndexDis == '迪士尼' && index == '总用户数') {
+        drawSelectRaster1(data[len], index);
+    }else {
+        drawSelectRaster(data[len], index);
+    }
 }
 //隐藏栅格查询条件DIV，功能同switchControl
 function closeSelectRaster() {
@@ -820,7 +887,7 @@ function registerContextMenuRasterLayer(featureGroup) {
                             callDrawTrendPlot(pageUrl);
                             return;
                         }
-                        var pageUrl = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + index;
+                        var pageUrl = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + encodeURIComponent(index);
                         callDrawTrendPlot(pageUrl);
                     }
                 },
@@ -833,7 +900,7 @@ function registerContextMenuRasterLayer(featureGroup) {
                     callback: function(){
                         var gridId = layer.options.gridId;
                         var index = '总流量';
-                        var pageUrl = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + index;
+                        var pageUrl = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + encodeURIComponent(index);
                         callDrawTrendPlot(pageUrl);
                     }
                 },
@@ -842,7 +909,7 @@ function registerContextMenuRasterLayer(featureGroup) {
                     index: 3
                 },
                 {
-                    text: '查看小区 ',
+                    text: '查看小区列表',
                     callback: function(){
                         var gridId = layer.options.gridId;
                         var index = layer.options.index;
@@ -1083,22 +1150,60 @@ function drawSelectRaster1(data, index) {
             }
         ).addTo(labelRectangleLayer);
     }
+    var timeNow = data[0].time.substring(0,16);
+    $('#timeNow').text(timeNow);
     addContextMenuRaster();
 }
 //根据缩放级别修改标注字体大小
-function changeLabelClassDynamic() {
-    labelRectangleLayer.eachLayer(function(layer) {
-        var icon = layer.options.icon;
-        var options = icon.options;
-        options.labelClassName = 'sweet-deal-labelBig';
-    });
+function changeLabelClassDynamic(zoom) {
+    if(heatIndexDis != '迪士尼') {
+        if(zoom > 16) {
+            labelRectangleLayer.eachLayer(function(layer) {
+                var icon = layer.options.icon;
+                var options = icon.options;
+                options.labelClassName = 'sweet-deal-label-big';
+            });
+        }else if(zoom > 15) {
+            labelRectangleLayer.eachLayer(function(layer) {
+                var icon = layer.options.icon;
+                var options = icon.options;
+                options.labelClassName = 'sweet-deal-label';
+            });
+        }else {
+            labelRectangleLayer.eachLayer(function(layer) {
+                var icon = layer.options.icon;
+                var options = icon.options;
+                options.labelClassName = 'sweet-deal-label-small';
+            });
+        }
+    }else {
+        if(zoom > 17) {
+            labelRectangleLayer.eachLayer(function(layer) {
+                var icon = layer.options.icon;
+                var options = icon.options;
+                options.labelClassName = 'sweet-deal-label-big';
+            });
+        }else if(zoom > 16) {
+            labelRectangleLayer.eachLayer(function(layer) {
+                var icon = layer.options.icon;
+                var options = icon.options;
+                options.labelClassName = 'sweet-deal-label';
+            });
+        }else {
+            labelRectangleLayer.eachLayer(function(layer) {
+                var icon = layer.options.icon;
+                var options = icon.options;
+                options.labelClassName = 'sweet-deal-label-small';
+            });
+        }
+    }
     map.removeLayer(labelRectangleLayer);
     map.addLayer(labelRectangleLayer);
 }
 //根据页面条件ajax查询栅格,黄文接口
-function ajaxQueryRaster1(startTime, endTime, topN, index) {
+function ajaxQueryRaster1(startTime, endTime, topN, index, timeInterval) {
     // var url = 'http://' + baseUrl + ':'+basePort+'/services/ws/fast_query/area/pm/gridPf';
-    var url = 'http://' + baseUrl + ':' + basePort + '/services/ws/fast_query/area/pm/gridTopN?startTime=' + startTime + '&endTime=' + endTime + '&topN=' + topN;
+    var url = 'http://' + baseUrl + ':' + basePort + '/services/ws/fast_query/area/pm/gridTopN?startTime=' + startTime + '&endTime=' + endTime + '&topN=' + topN + '&step=' + timeInterval;
     //console.log(url);
     $.ajax({
         url: url,
@@ -1137,6 +1242,7 @@ function ajaxQueryRaster1(startTime, endTime, topN, index) {
             //绘制最近时间的栅格
             var lengh = timeGroup.length;
             drawSelectRaster1(timeGroup[lengh-1],index);
+            
             // timeGroup[lengh-1].map(function(obj) {
             //     var latMax = parseFloat(obj.lat2),
             //         latMin = parseFloat(obj.lat1),
@@ -1283,7 +1389,19 @@ function drawSelectRaster(data,index) {
                 });
             }   
         }else {
-            if(lenDataVal > 2) {
+            if(lenDataVal > 5) {
+                var SweetIcon = L.Icon.Label.extend({
+                    options: {
+                        iconUrl: iconUrl,
+                        shadowUrl: null,
+                        iconSize: sizePoint,
+                        iconAnchor: new L.Point(0, 1),
+                        labelAnchor: new L.Point(-25, 0),
+                        wrapperAnchor: new L.Point(25, 25),
+                        labelClassName: 'sweet-deal-label'
+                    }
+                });
+            }else if(lenDataVal > 4) {
                 var SweetIcon = L.Icon.Label.extend({
                     options: {
                         iconUrl: iconUrl,
@@ -1295,6 +1413,30 @@ function drawSelectRaster(data,index) {
                         labelClassName: 'sweet-deal-label'
                     }
                 });
+            }else if(lenDataVal > 3) {
+                var SweetIcon = L.Icon.Label.extend({
+                    options: {
+                        iconUrl: iconUrl,
+                        shadowUrl: null,
+                        iconSize: sizePoint,
+                        iconAnchor: new L.Point(0, 1),
+                        labelAnchor: new L.Point(-16, 0),
+                        wrapperAnchor: new L.Point(25, 25),
+                        labelClassName: 'sweet-deal-label'
+                    }
+                });
+            }else if(lenDataVal > 2) {
+                var SweetIcon = L.Icon.Label.extend({
+                    options: {
+                        iconUrl: iconUrl,
+                        shadowUrl: null,
+                        iconSize: sizePoint,
+                        iconAnchor: new L.Point(0, 1),
+                        labelAnchor: new L.Point(-12, 0),
+                        wrapperAnchor: new L.Point(25, 25),
+                        labelClassName: 'sweet-deal-label'
+                    }
+                });
             }else {
                 var SweetIcon = L.Icon.Label.extend({
                     options: {
@@ -1302,13 +1444,12 @@ function drawSelectRaster(data,index) {
                         shadowUrl: null,
                         iconSize: sizePoint,
                         iconAnchor: new L.Point(0, 1),
-                        labelAnchor: new L.Point(10, 0),
+                        labelAnchor: new L.Point(0, 0),
                         wrapperAnchor: new L.Point(25, 25),
                         labelClassName: 'sweet-deal-label'
                     }
                 });
             }
-            
         }
         
         var labelMarker = new L.Marker(
@@ -1321,15 +1462,17 @@ function drawSelectRaster(data,index) {
             }
         ).addTo(labelRectangleLayer);
     }
+    var timeNow = data[0].time.substring(0,16);
+    $('#timeNow').text(timeNow);
     addContextMenuRaster();
 }
 //根据页面条件ajax查询栅格,娄尧嘉接口
-function ajaxQueryRaster(startTime, endTime, topN, index, order) {
+function ajaxQueryRaster(startTime, endTime, topN, index, order, timeInterval) {
     startTime += ':00';
     endTime += ':00';
     var type = 'DEFAULT';
     if(heatIndexDis == '迪士尼') type = 'DISNEY';
-    var url = 'http://' + baseUrl + ':' + basePort + '/stream/rank/grids?timeBegin=' + startTime + '&timeEnd=' + endTime + '&num=' + topN + '&type=' + type + '&sortKey=' + encodeURIComponent(index) + '&order=' + order;
+    var url = 'http://' + baseUrl + ':' + basePort + '/stream/rank/grids?timeBegin=' + startTime + '&timeEnd=' + endTime + '&num=' + topN + '&type=' + type + '&sortKey=' + encodeURIComponent(index) + '&order=' + order + '&step=' + timeInterval;
     // var url = 'http://10.221.247.7:8299/stream/rank/grids?timeBegin=2017-03-06%2016:25:42&timeEnd=2017-03-06%2017:40:42&num=100&type=DISNEY';
     //console.log(url);
     $.ajax({
@@ -1366,9 +1509,11 @@ function ajaxQueryRaster(startTime, endTime, topN, index, order) {
                 });
             });
             // console.log(timeGroup);
-            //绘制最近时间的栅格
+            //绘制最近时间的栅格,用户数有可能为0
             var lengh = timeGroup.length;
             drawSelectRaster(timeGroup[lengh-1], index);
+            // console.log(timeGroup[lengh-1][0]);
+            // console.log(timeGroup[lengh-1]);
             //设置中心点
             var pointObj = timeGroup[lengh-1][0];
             if(pointObj) {
@@ -1458,7 +1603,8 @@ function rerenderHeatMap(){
         if(map.hasLayer(rectangleLayer)){
             if(!map.hasLayer(labelRectangleLayer)){
                 map.addLayer(labelRectangleLayer);
-            }            
+            }
+            // changeLabelClassDynamic(curZoom);
         }
     }else{
         if(map.hasLayer(labelRectangleLayer)){

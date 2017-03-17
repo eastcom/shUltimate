@@ -145,7 +145,7 @@
             position: absolute;
             display: none;
             right: 120px;
-            top: 350px;
+            top: 420px;
             width: 340px;           
             border-radius: 10px;
             /*height: 300px;*/
@@ -232,17 +232,30 @@
             box-shadow: none;
             color: #000000;
             font-weight: normal;
-            font-size: 10px;
+            transform: scale(1);
+            font-size: 8px;
             z-index: 9999;
         }
-        .sweet-deal-labelBig {
+        .sweet-deal-label-small {
             background-color: rgba(255, 255, 255, 0.001);
             -moz-box-shadow: none;
             -webkit-box-shadow: none;
             box-shadow: none;
             color: #000000;
             font-weight: normal;
-            font-size: 16px;
+            transform: scale(0.6);
+            font-size: 4px;
+            z-index: 9999;
+        }
+        .sweet-deal-label-big {
+            background-color: rgba(255, 255, 255, 0.001);
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            color: #000000;
+            font-weight: normal;
+            transform: scale(1.6);
+            font-size: 20px;
             z-index: 9999;
         }
         .leaflet-contextmenu a.leaflet-contextmenu-item{
@@ -368,6 +381,10 @@
         <div id="legendControl" ></div>
         <div id="netWorkScale" class="img-preview"></div>
         <div id="conditionsSelect" class="img-preview">
+            <div style="width: 100%; border-bottom: 1px solid gray;">
+                <span id="timeNow" style="line-height: 30px; margin-left: 10px;">2017-03-13 13:10</span>
+                <img alt="最小化" title="最小化" src="images/minimize.jpg" style="float: right; margin-right: 10px; cursor: pointer; margin-top: 6px;" onclick="minimizeConditionsSelect()" />
+            </div>
             <!-- <div class="div-custom-wx">
                 <span>指标类型：</span>
                 <select id="indexType" class="selectpicker" style="display: inline-block;">
@@ -375,6 +392,7 @@
                     <option value="asc">劣化</option>
                 </select>
             </div> -->
+            
             <div class="div-custom-wx">
                 <!-- <input type="radio" name="zengfu" value="增幅" />增幅
                 <input type="radio" name="liehua" value="劣化" />劣化 -->
@@ -390,18 +408,28 @@
                 </select>
                 
             </div>
-            <div class="div-custom-wx">
+            <div class="div-custom-wx" id="timeInterval" style="display: none;">
+                <span>时间粒度：</span>
+                <select id="timeIntervalSelect" class="selectpicker" style="display: inline-block;">
+                    <option value="5">5分钟</option>
+                    <option value="20">20分钟</option>                   
+                    <option value="30">30分钟</option>
+                    <option value="60">1小时</option>                    
+                </select>
+            </div>
+            <div id="timeEndDiv"  class="div-custom-wx" style="display: none;">
                 <span>开始时间：</span>
                 <input type="text" id="timeBeginSelect" name="date" value="" style="display: inline-block;" />
             </div>
             <div class="div-custom-wx">
-                <span>结束时间：</span>
+                <span id="modifyTimeName">时间：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <input type="text" id="timeEndSelect" name="date" value="" style="display: inline-block;" />
             </div>
             <div class="div-custom-wx">
+                <span><input type="checkbox" id="playOrNot" placeholder="" value="回放" onclick="showPlayButton(this)" />&nbsp;回放</span>
                 <center>
                     <input type="button" id="querySelect" class="btn btn-info" value="查 询" placeholder="" onclick="querySelectRaster()" />
-                    <input type="button" id="playSelect" class="btn btn-primary" value="播 放" placeholder="" onclick="playSelectRaster()" />
+                    <input type="button" id="playSelect" class="btn btn-primary" value="播 放" placeholder="" onclick="playSelectRaster()" disabled="true" />
                     <!-- <input type="button" id="closeSelect" class="btn btn-warning" value="关 闭" placeholder="" onclick="closeSelectRaster()" /> -->
                 </center>
             </div>

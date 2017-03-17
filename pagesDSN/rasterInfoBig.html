@@ -554,12 +554,12 @@
         window.parent.closeTrendPlot();
     }
     function normalTrendPlotParent(){
-        var str = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + index;
+        var str = "pagesDSN/rasterInfo.html?gridId="+gridId + "&index=" + encodeURIComponent(index);
         window.parent.callDrawTrendPlot(str);
     }
     var nameVal = getUrlParam(locationUrl,'');
     var gridId = nameVal.gridId;
-    var index = nameVal.index;
+    var index = decodeURIComponent(nameVal.index);
     //var gridId = 'X001Y039';
     callServer(gridId,index);
     //callServer('中国博览会','腾讯新闻');
